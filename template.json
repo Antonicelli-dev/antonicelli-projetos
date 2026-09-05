@@ -1,0 +1,538 @@
+{
+  "name": "Checklist Antonicelli 2026",
+  "phases": [
+    {
+      "name": "Pré-Evento",
+      "categories": [
+        {
+          "name": "Briefing & Cliente",
+          "tasks": [
+            {
+              "name": "Coletar briefing completo do evento (cliente, nome do evento, tipologia, data, local, nº de participantes)"
+            },
+            {
+              "name": "Definir/confirmar data e local do evento"
+            },
+            {
+              "name": "Realizar reunião de alinhamento geral com o cliente e o time de eventos"
+            },
+            {
+              "name": "Levantar restrições do espaço/local (marca, adesivos, comunicação visual autoportante, horários)"
+            },
+            {
+              "name": "Confirmar se haverá autorização de imprensa/divulgação do evento"
+            }
+          ]
+        },
+        {
+          "name": "Cronograma",
+          "tasks": [
+            {
+              "name": "Elaborar cronograma de tempos e movimentos (montagem, evento, desmontagem)"
+            },
+            {
+              "name": "Validar cronograma com todos os fornecedores envolvidos"
+            },
+            {
+              "name": "Definir escala de equipe interna (produtor responsável por dia/turno)"
+            }
+          ]
+        },
+        {
+          "name": "Fornecedores",
+          "tasks": [
+            {
+              "name": "Levantar e contratar fornecedores necessários (som, luz, AV, cenografia, buffet, segurança etc.)"
+            },
+            {
+              "name": "Cadastrar fornecedores (documentação) e emitir pedidos de compra/contratos"
+            },
+            {
+              "name": "Confirmar horários de chegada e responsáveis de cada fornecedor"
+            },
+            {
+              "name": "Alinhar alimentação da equipe de montagem/fornecedores (marmita, voucher etc.)"
+            }
+          ]
+        },
+        {
+          "name": "Estrutura técnica",
+          "tasks": [
+            {
+              "name": "Contratar/reservar equipamentos de som, luz e transmissão"
+            },
+            {
+              "name": "Contratar/reservar painel de LED, telões e TVs de apoio (retorno, cronômetro, PPT)"
+            },
+            {
+              "name": "Contratar internet dedicada / link de transmissão"
+            },
+            {
+              "name": "Contratar gerador(es), caso necessário, e validar carga necessária"
+            },
+            {
+              "name": "Definir necessidade de gravação e transmissão simultânea"
+            }
+          ]
+        },
+        {
+          "name": "Cenografia & Comunicação Visual",
+          "tasks": [
+            {
+              "name": "Desenvolver conceito de cenografia (palco, backdrop, totens, espaço instagramável)"
+            },
+            {
+              "name": "Aprovar arte/key visual do evento com o cliente"
+            },
+            {
+              "name": "Produzir sinalização, banners, totens e comunicação visual do local"
+            },
+            {
+              "name": "Definir e contratar ambientação floral/paisagismo, se houver"
+            }
+          ]
+        },
+        {
+          "name": "Credenciamento",
+          "tasks": [
+            {
+              "name": "Definir sistema/fornecedor de credenciamento e lista de convidados"
+            },
+            {
+              "name": "Providenciar crachás, cordões e material de credenciamento"
+            },
+            {
+              "name": "Definir quantidade de totens/pontos de credenciamento"
+            }
+          ]
+        },
+        {
+          "name": "Kits & Brindes",
+          "tasks": [
+            {
+              "name": "Definir composição do kit/brinde do participante (mochila, camiseta, brindes etc.)"
+            },
+            {
+              "name": "Providenciar compra/produção de brindes, kits e materiais gráficos (cadernos, canetas etc.)"
+            },
+            {
+              "name": "Organizar montagem dos kits antes do evento"
+            }
+          ]
+        },
+        {
+          "name": "Equipe de apoio",
+          "tasks": [
+            {
+              "name": "Contratar recepcionistas / staff de apoio de sala"
+            },
+            {
+              "name": "Contratar segurança"
+            },
+            {
+              "name": "Contratar carregadores/apoio de montagem e desmontagem"
+            },
+            {
+              "name": "Contratar equipe de limpeza, se necessário"
+            },
+            {
+              "name": "Definir Mestre de Cerimônias / apresentador"
+            },
+            {
+              "name": "Contratar fotógrafo e/ou videomaker, com sistema de entrega das imagens"
+            },
+            {
+              "name": "Contratar tradução simultânea, caso o evento seja bilíngue"
+            }
+          ]
+        },
+        {
+          "name": "Alimentação & Bebidas (A&B)",
+          "tasks": [
+            {
+              "name": "Definir cardápio de coffee break, almoço, jantar e/ou coquetel"
+            },
+            {
+              "name": "Confirmar horários de serviço de cada refeição junto ao buffet/local"
+            },
+            {
+              "name": "Levantar restrições alimentares dos participantes"
+            },
+            {
+              "name": "Definir política de bebidas (ao consumo x pacote) e responsável pelo pagamento"
+            }
+          ]
+        },
+        {
+          "name": "Logística & Hospedagem",
+          "tasks": [
+            {
+              "name": "Providenciar rooming list e horários de check-in/check-out (se houver hospedagem)"
+            },
+            {
+              "name": "Organizar transporte de participantes/equipe (vans, ônibus, transfer)"
+            },
+            {
+              "name": "Providenciar autorização de acesso para veículos de fornecedores"
+            }
+          ]
+        },
+        {
+          "name": "Jurídico & Financeiro",
+          "tasks": [
+            {
+              "name": "Confirmar dados de faturamento e forma de emissão de nota fiscal"
+            },
+            {
+              "name": "Providenciar ECAD, caso haja música ao vivo/DJ"
+            },
+            {
+              "name": "Contratar seguro do local/evento, se exigido"
+            },
+            {
+              "name": "Confirmar responsabilidades de despesas (empresa x participante)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Montagem",
+      "categories": [
+        {
+          "name": "Chegada & Vistoria",
+          "tasks": [
+            {
+              "name": "Chegada da equipe responsável e vistoria do espaço"
+            },
+            {
+              "name": "Chegada e conferência dos carregadores/apoio contratados"
+            },
+            {
+              "name": "Chegada da equipe de segurança/bombeiro (quando aplicável)"
+            }
+          ]
+        },
+        {
+          "name": "Descarga & Estrutura",
+          "tasks": [
+            {
+              "name": "Descarregar equipamentos de som, luz e estruturas"
+            },
+            {
+              "name": "Descarregar painel de LED / materiais audiovisuais"
+            },
+            {
+              "name": "Montar estruturas aéreas/box truss e validar pontos de instalação"
+            },
+            {
+              "name": "Montar palco/praticável e revestimento (carpete)"
+            }
+          ]
+        },
+        {
+          "name": "Elétrica",
+          "tasks": [
+            {
+              "name": "Ligar e testar gerador(es)"
+            },
+            {
+              "name": "Instalar pontos de energia (stecks) conforme projeto"
+            },
+            {
+              "name": "Instalar internet/link de transmissão e testar conexão"
+            }
+          ]
+        },
+        {
+          "name": "Cenografia",
+          "tasks": [
+            {
+              "name": "Montar backdrop, totens e espaço instagramável"
+            },
+            {
+              "name": "Montar comunicação visual e sinalização do espaço"
+            },
+            {
+              "name": "Montar ambientação floral/paisagismo"
+            }
+          ]
+        },
+        {
+          "name": "Audiovisual",
+          "tasks": [
+            {
+              "name": "Montar painel de LED, telões e TVs de apoio"
+            },
+            {
+              "name": "Montar sistema de som e microfones"
+            },
+            {
+              "name": "Montar câmeras, sistema de gravação e transmissão"
+            },
+            {
+              "name": "Realizar testes de som, luz e transmissão"
+            }
+          ]
+        },
+        {
+          "name": "Mobiliário",
+          "tasks": [
+            {
+              "name": "Montar mobiliário (mesas, cadeiras, poltronas, pranchões)"
+            },
+            {
+              "name": "Montar house técnica e mesa/apoio da produção"
+            }
+          ]
+        },
+        {
+          "name": "Credenciamento",
+          "tasks": [
+            {
+              "name": "Montar balcão/totens de credenciamento"
+            },
+            {
+              "name": "Testar sistema de credenciamento (impressoras, rede, cadastros)"
+            }
+          ]
+        },
+        {
+          "name": "A&B",
+          "tasks": [
+            {
+              "name": "Montar estrutura de coffee break / bar / cozinha de apoio"
+            }
+          ]
+        },
+        {
+          "name": "Kits & Brindes",
+          "tasks": [
+            {
+              "name": "Conferir e organizar kits, brindes e materiais promocionais no local"
+            }
+          ]
+        },
+        {
+          "name": "Ensaios",
+          "tasks": [
+            {
+              "name": "Realizar ensaio com apresentadores, palestrantes e/ou executivos"
+            },
+            {
+              "name": "Passar roteiro/teleprompter com o Mestre de Cerimônias"
+            },
+            {
+              "name": "Preparar camarim para palestrantes/artistas, se houver"
+            }
+          ]
+        },
+        {
+          "name": "Conferência final",
+          "tasks": [
+            {
+              "name": "Checklist final de materiais e equipamentos antes da abertura"
+            },
+            {
+              "name": "Posicionar equipe (recepção, segurança, apoio) antes da chegada dos convidados"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Dia do Evento",
+      "categories": [
+        {
+          "name": "Abertura",
+          "tasks": [
+            {
+              "name": "Chegada e posicionamento de toda a equipe e fornecedores"
+            },
+            {
+              "name": "Teste final de equipamentos (som, luz, transmissão)"
+            },
+            {
+              "name": "Abrir credenciamento/recepção dos convidados"
+            },
+            {
+              "name": "Entregar crachás, kits e brindes de boas-vindas"
+            },
+            {
+              "name": "Ativar ambientação/recepção (música, decoração, welcome coffee)"
+            }
+          ]
+        },
+        {
+          "name": "Programação",
+          "tasks": [
+            {
+              "name": "Executar abertura oficial (fala do cliente/MC)"
+            },
+            {
+              "name": "Seguir agenda/roteiro do evento conforme cronograma"
+            },
+            {
+              "name": "Realizar coffee breaks nos horários programados"
+            },
+            {
+              "name": "Realizar almoço/jantar/coquetel conforme programação"
+            },
+            {
+              "name": "Acompanhar palestras, dinâmicas, premiações e demais atrações"
+            }
+          ]
+        },
+        {
+          "name": "Registro",
+          "tasks": [
+            {
+              "name": "Cobrir o evento com fotografia e/ou vídeo"
+            },
+            {
+              "name": "Garantir gravação e transmissão simultânea, se aplicável"
+            }
+          ]
+        },
+        {
+          "name": "Encerramento",
+          "tasks": [
+            {
+              "name": "Realizar encerramento oficial do evento"
+            },
+            {
+              "name": "Distribuir brindes/lembranças de saída, se houver"
+            },
+            {
+              "name": "Confirmar próximos passos com o cliente (dia seguinte, se evento de múltiplos dias)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Desmontagem",
+      "categories": [
+        {
+          "name": "Planejamento",
+          "tasks": [
+            {
+              "name": "Confirmar horário de início da desmontagem com o local/cliente"
+            },
+            {
+              "name": "Chegada dos carregadores para desmontagem"
+            }
+          ]
+        },
+        {
+          "name": "Estrutura & Audiovisual",
+          "tasks": [
+            {
+              "name": "Desmontar painel de LED, som, luz e demais equipamentos técnicos"
+            },
+            {
+              "name": "Desmontar câmeras e sistema de transmissão/gravação"
+            }
+          ]
+        },
+        {
+          "name": "Cenografia",
+          "tasks": [
+            {
+              "name": "Desmontar backdrop, totens, palco e demais elementos cenográficos"
+            },
+            {
+              "name": "Retirar comunicação visual e sinalização"
+            },
+            {
+              "name": "Retirar ambientação floral/paisagismo"
+            }
+          ]
+        },
+        {
+          "name": "Mobiliário",
+          "tasks": [
+            {
+              "name": "Retirar mobiliário locado (mesas, cadeiras, poltronas, pranchões)"
+            }
+          ]
+        },
+        {
+          "name": "Materiais",
+          "tasks": [
+            {
+              "name": "Recolher rádios comunicadores e equipamentos de apoio"
+            },
+            {
+              "name": "Separar e devolver ao cliente sobras de brindes, crachás e materiais"
+            },
+            {
+              "name": "Conferir checklist de devolução dos equipamentos locados"
+            }
+          ]
+        },
+        {
+          "name": "Entrega do espaço",
+          "tasks": [
+            {
+              "name": "Fazer checklist final de materiais/equipamentos da house"
+            },
+            {
+              "name": "Vistoriar e entregar o espaço limpo e organizado ao local"
+            },
+            {
+              "name": "Manter segurança até o fim da desmontagem"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Pós-Evento",
+      "categories": [
+        {
+          "name": "Financeiro",
+          "tasks": [
+            {
+              "name": "Conferir e emitir notas fiscais de todos os fornecedores"
+            },
+            {
+              "name": "Providenciar pagamento dos fornecedores"
+            },
+            {
+              "name": "Fechar comandas e despesas extras (hospedagem, consumo, etc.)"
+            }
+          ]
+        },
+        {
+          "name": "Relacionamento com cliente",
+          "tasks": [
+            {
+              "name": "Enviar fotos e/ou vídeos do evento ao cliente"
+            },
+            {
+              "name": "Enviar relatório/pós-evento com números e observações"
+            },
+            {
+              "name": "Aplicar/consolidar pesquisa de satisfação, se houver"
+            }
+          ]
+        },
+        {
+          "name": "Organização interna",
+          "tasks": [
+            {
+              "name": "Devolver e organizar materiais remanescentes no escritório"
+            },
+            {
+              "name": "Realizar reunião de avaliação interna (pontos positivos e de melhoria)"
+            },
+            {
+              "name": "Arquivar documentação do evento (contratos, cronograma, briefing)"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

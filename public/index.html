@@ -1,0 +1,1313 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Antonicelli — Gerenciamento de Projetos</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f5f6f8;color:#20242b}
+header{height:64px;background:#17191d;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 24px}
+.logo{display:flex;align-items:center}
+.logo img{height:34px;width:auto;display:block}
+.noteIcon{display:inline-flex;align-items:center;justify-content:center;margin-left:7px;font-size:14px;vertical-align:middle;opacity:.75}
+.noteIcon[title]{cursor:help}
+.userInfo{display:flex;align-items:center;gap:8px}
+.avatar{width:34px;height:34px;border-radius:50%;object-fit:cover;background:#34373d;border:1px solid #ffffff22}
+.avatarLarge{width:96px;height:96px;border-radius:50%;object-fit:cover;background:#eceff2;border:1px solid #d9dde2}
+.avatarPlaceholder{display:flex;align-items:center;justify-content:center;font-weight:700;color:#666}
+.avatarStack{display:flex;align-items:center}
+.avatarStack .avatar{margin-left:-8px;border:2px solid #fff}
+.avatarStack .avatar:first-child{margin-left:0}
+.avatarStack .avatarPlaceholder{margin-left:-8px;border:2px solid #fff}
+.avatarStack .avatarPlaceholder:first-child{margin-left:0}
+.responsiblePicker{min-width:170px}
+.responsibleChecks{display:grid;gap:8px;margin-top:6px}
+.responsibleChecks label{display:flex;align-items:center;gap:8px;margin:0;font-size:14px;font-weight:400}
+.responsibleChecks input{width:auto}
+
+.profilePhotoRow{display:flex;align-items:center;gap:18px;margin:12px 0}
+.wrap{max-width:1240px;margin:28px auto;padding:0 18px}
+.card{background:#fff;border:1px solid #e0e3e7;border-radius:12px;padding:18px;margin-bottom:12px}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px}.actions{display:flex;gap:8px;flex-wrap:wrap}
+button{border:0;border-radius:8px;padding:10px 14px;cursor:pointer;font-weight:700}button:disabled{opacity:.55}
+.primary{background:#17191d;color:#fff}.secondary{background:#e9ebef;color:#222}.danger{background:#f5e7e7;color:#8b1e1e}.mini{padding:6px 9px;font-size:12px}
+input,select,textarea{font:inherit;padding:9px;border:1px solid #d7dbe0;border-radius:7px;width:100%}textarea{min-height:180px;resize:vertical;line-height:1.45}
+label{display:block;font-size:12px;font-weight:bold;margin:10px 0 5px}.small{font-size:12px;color:#707782}
+.note{padding:12px 14px;border-radius:9px;background:#eef3ff;color:#334;line-height:1.45;margin:12px 0}
+.event{display:grid;grid-template-columns:1fr 180px 100px;gap:15px;align-items:center;cursor:pointer}
+.progress{height:8px;background:#e5e7eb;border-radius:99px;overflow:hidden}.bar{height:100%;background:#30343a}
+.login{max-width:420px;margin:90px auto}.modal{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;padding:18px;z-index:20}
+.modal.show{display:flex}.modalbox{background:#fff;padding:22px;border-radius:12px;width:min(620px,100%);max-height:90vh;overflow:auto}
+.error{background:#fee;border:1px solid #eaa;color:#900;padding:10px;border-radius:8px;margin:10px 0}
+.task{display:grid;grid-template-columns:minmax(300px,1fr) 180px 190px auto;gap:10px;padding:11px 0 11px 12px;border-top:1px solid #eee;border-left:5px solid transparent;align-items:center}
+.taskName{font-weight:700;cursor:pointer}.taskName:hover{text-decoration:underline}
+.task[data-status="Não Iniciada"]{border-left-color:#9ca3af}
+.task[data-status="Em Andamento"]{border-left-color:#3b82f6}
+.task[data-status="Concluída"]{border-left-color:#22c55e}
+.task[data-status="Atrasada"]{border-left-color:#ef4444}
+.statusSelect{font-weight:700}
+.status-nao-iniciada{background:#f1f3f5;color:#5f6368;border-color:#c9cdd2}
+.status-em-andamento{background:#eaf2ff;color:#175ec7;border-color:#8bb8ff}
+.status-concluida{background:#eaf8ee;color:#18753a;border-color:#8ed3a6}
+.status-atrasada{background:#fdecec;color:#b42318;border-color:#f2a3a0}
+.detailGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.detailMeta{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px;background:#f8f9fa;border-radius:9px;margin-bottom:12px}
+.eventSummary{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:16px 0}
+.summaryItem{background:#fff;border:1px solid #e0e3e7;border-radius:10px;padding:12px}
+.summaryLabel{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#7b818a;margin-bottom:4px}
+.summaryValue{font-weight:700;line-height:1.3}
+@media(max-width:1000px){.eventSummary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.eventSummary{grid-template-columns:1fr}}
+
+.dragHandle{font-size:18px;color:#9aa0a6;cursor:grab;user-select:none;padding:2px 5px}
+.task.dragging{opacity:.35}
+.taskDropzone{min-height:26px}
+.taskDropzone.drag-over{background:#eef5ff}
+.cathead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.catTitle{display:flex;align-items:center;gap:8px}
+
+.cat{background:#fff;border:1px solid #e0e3e7;border-radius:10px;margin:10px 0;overflow:hidden}.cathead{padding:12px 15px;background:#fafafa;font-weight:700}
+.taskrow{padding:0 15px}.phaseHead{display:flex;justify-content:space-between;align-items:center}.tplTask{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid #eee}
+.templateCategory{padding:12px 15px;border-top:1px solid #eee}.member{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 0;border-top:1px solid #eee}
+.filters{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}.hidden{display:none!important}
+.calendarToolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:14px 0}
+.calendarTitle{font-size:20px;font-weight:700;text-transform:capitalize}
+.calendarGrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;background:#dfe3e8;border:1px solid #dfe3e8;border-radius:12px;overflow:hidden}
+.calendarDow{background:#f5f6f7;text-align:center;font-size:12px;font-weight:700;padding:9px 4px;color:#667085}
+.calendarDay{background:#fff;min-height:112px;padding:7px;position:relative;cursor:pointer;min-width:0}
+.calendarDay.outside{background:#f7f8f9;color:#a0a6ad}
+.calendarDay.today{box-shadow:inset 0 0 0 2px #59636e}
+.calendarDay:hover{background:#f8fafb}
+.calendarDayNum{font-size:13px;font-weight:700;margin-bottom:6px}
+.calendarItems{display:flex;flex-direction:column;gap:4px;min-width:0}
+.calendarItem{font-size:11px;line-height:1.25;padding:4px 6px;border-radius:6px;background:#eef1f4;border-left:3px solid #7a838d;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.calendarMore{font-size:11px;color:#667085;font-weight:600;padding-top:2px}
+.calendarTaskStatus{display:inline-flex;align-items:center;padding:3px 7px;border-radius:999px;font-size:11px;font-weight:700;background:#eef1f4}
+.calendarTaskMeta{font-size:12px;color:#667085;margin-top:4px}
+.calendarResp{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-top:7px}
+.calendarAvatar{width:25px;height:25px;border-radius:50%;object-fit:cover;background:#e5e7eb;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;border:1px solid #d7dce1;overflow:hidden}
+.calendarLegend{font-size:12px;color:#667085;margin-top:10px}
+.dayProject{padding:12px 0;border-bottom:1px solid #e3e6e9}
+.dayProject:last-child{border-bottom:0}
+.dayProjectTitle{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px}
+@media(max-width:720px){
+  .calendarGrid{overflow-x:auto;grid-template-columns:repeat(7,minmax(92px,1fr))}
+  .calendarDay{min-height:96px}
+}
+.archiveMeta{font-size:12px;color:#777;margin-top:6px}
+.listActions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.emptyState{padding:28px;text-align:center;color:#777}
+.workTypeBadge{display:inline-flex;align-items:center;padding:4px 9px;border-radius:999px;background:#eef1f4;border:1px solid #d7dce1;font-size:12px;font-weight:700;letter-spacing:.02em;margin-right:8px;white-space:nowrap}
+.modelTabs{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.modelTab{border:1px solid #d7dce1;background:#fff;border-radius:10px;padding:10px 12px;cursor:pointer;text-align:left}
+.modelTab.active{border-color:#555;background:#f2f3f5}
+.modelTab .small{margin-top:2px}
+.modelHeader{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}
+
+@media(max-width:900px){.event,.task,.filters,.detailGrid,.detailMeta{grid-template-columns:1fr}.toolbar,.phaseHead{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body>
+<header><div class="logo"><img src="/assets/logo-antonicelli.png" alt="Antonicelli Comunicação e Eventos"></div><div id="userbar"></div></header>
+<main id="app" class="wrap"></main>
+<div class="modal" id="modal"><div class="modalbox" id="modalbox"></div></div>
+
+<script>
+let token=localStorage.getItem('antonicelli_token'),me=null,currentEvent=null,currentTemplate=null,templateSummaries=[],allUsers=[];
+const app=document.getElementById('app'),modalEl=document.getElementById('modal'),modalBox=document.getElementById('modalbox');
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+async function api(url,opts={}){
+  opts.headers={...(opts.headers||{})};if(token)opts.headers.Authorization='Bearer '+token;
+  if(opts.body&&typeof opts.body!=='string'){opts.headers['Content-Type']='application/json';opts.body=JSON.stringify(opts.body)}
+  const r=await fetch(url,opts),data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||'Erro');return data;
+}
+function showModal(h){modalBox.innerHTML=h;modalEl.classList.add('show')}function closeModal(){modalEl.classList.remove('show');modalBox.innerHTML=''}
+
+function roleLabel(role){
+  return ({admin:'Administrador',collaborator:'Colaborador',guest:'Convidado'})[role]||role;
+}
+
+
+function avatarMarkup(user,large=false){
+  const cls=large?'avatarLarge':'avatar';
+  if(user&&user.avatar_data)return `<img class="${cls}" src="${user.avatar_data}" alt="Foto de perfil">`;
+  const initial=esc((user?.name||'?').trim().charAt(0).toUpperCase()||'?');
+  return `<div class="${cls} avatarPlaceholder">${initial}</div>`;
+}
+
+function resizeAvatarFile(file,maxSize=512,quality=.82){
+  return new Promise((resolve,reject)=>{
+    if(!file)return resolve('');
+    if(!file.type.startsWith('image/'))return reject(new Error('Selecione uma imagem'));
+    const reader=new FileReader();
+    reader.onerror=()=>reject(new Error('Não foi possível ler a imagem'));
+    reader.onload=()=>{
+      const img=new Image();
+      img.onerror=()=>reject(new Error('Imagem inválida'));
+      img.onload=()=>{
+        const scale=Math.min(1,maxSize/Math.max(img.width,img.height));
+        const w=Math.max(1,Math.round(img.width*scale));
+        const h=Math.max(1,Math.round(img.height*scale));
+        const canvas=document.createElement('canvas');
+        canvas.width=w;canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        resolve(canvas.toDataURL('image/jpeg',quality));
+      };
+      img.src=reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function showInviteRegistration(inviteToken){
+  document.getElementById('userbar').innerHTML='';
+  try{
+    const inv=await api('/api/invitations/'+encodeURIComponent(inviteToken));
+    app.innerHTML=`<div class="card login">
+      <h1>Concluir cadastro</h1>
+      <div class="small">Convite para acessar a plataforma Antonicelli Eventos</div>
+      <div class="note" style="margin-top:15px">
+        Nível de acesso: <b>${esc(roleLabel(inv.role))}</b>
+        ${inv.event_name?`<br>Evento: <b>${esc(inv.event_name)}</b>`:''}
+      </div>
+      <form id="inviteRegisterForm">
+        <label>Nome</label>
+        <input id="inviteName" value="${esc(inv.name||'')}" required>
+
+        <label>E-mail</label>
+        <input id="inviteEmail" type="email" value="${esc(inv.email)}" disabled>
+
+        <label>Foto de perfil <span class="small">(opcional)</span></label>
+        <div class="profilePhotoRow">
+          <div id="inviteAvatarPreview">${avatarMarkup(inv,true)}</div>
+          <div style="flex:1">
+            <input id="inviteAvatar" type="file" accept="image/png,image/jpeg,image/webp">
+            <div class="small" style="margin-top:5px">A imagem será redimensionada automaticamente.</div>
+          </div>
+        </div>
+
+        <label>Crie sua senha</label>
+        <input id="invitePassword" type="password" minlength="6" required>
+
+        <label>Confirme sua senha</label>
+        <input id="invitePassword2" type="password" minlength="6" required>
+
+        <div id="inviteRegisterError"></div>
+        <button class="primary" id="inviteRegisterBtn" style="width:100%;margin-top:15px">Concluir cadastro</button>
+      </form>
+    </div>`;
+
+    let inviteAvatarData='';
+    document.getElementById('inviteAvatar').onchange=async e=>{
+      const file=e.target.files?.[0];
+      if(!file){inviteAvatarData='';return}
+      try{
+        inviteAvatarData=await resizeAvatarFile(file);
+        document.getElementById('inviteAvatarPreview').innerHTML=`<img class="avatarLarge" src="${inviteAvatarData}" alt="Prévia da foto">`;
+      }catch(err){alert(err.message);e.target.value=''}
+    };
+
+    document.getElementById('inviteRegisterForm').onsubmit=async e=>{
+      e.preventDefault();
+      const p1=document.getElementById('invitePassword').value;
+      const p2=document.getElementById('invitePassword2').value;
+      const box=document.getElementById('inviteRegisterError');
+      if(p1!==p2){
+        box.innerHTML='<div class="error">As senhas não coincidem.</div>';
+        return;
+      }
+      const btn=document.getElementById('inviteRegisterBtn');
+      btn.disabled=true;box.innerHTML='';
+      try{
+        const d=await api('/api/register-invite',{
+          method:'POST',
+          body:{token:inviteToken,name:document.getElementById('inviteName').value.trim(),password:p1,avatar_data:inviteAvatarData}
+        });
+        token=d.token;me=d.user;
+        localStorage.setItem('antonicelli_token',token);
+        history.replaceState({},'',location.pathname);
+        await loadEvents();
+      }catch(err){
+        box.innerHTML=`<div class="error">${esc(err.message)}</div>`;
+        btn.disabled=false;
+      }
+    };
+  }catch(err){
+    app.innerHTML=`<div class="card login"><h1>Convite</h1><div class="error">${esc(err.message)}</div>
+      <button class="secondary" id="goLogin">Ir para o login</button></div>`;
+    document.getElementById('goLogin').onclick=()=>{history.replaceState({},'',location.pathname);showLogin()};
+  }
+}
+
+function showLogin(error=''){
+  document.getElementById('userbar').innerHTML='';
+  app.innerHTML=`<div class="card login"><h1>Gerenciamento de Projetos</h1><div class="small">Acesso Antonicelli</div>${error?`<div class="error">${esc(error)}</div>`:''}
+  <form id="loginForm"><label>E-mail</label><input id="email" type="email" value="admin@antonicelli.local" required>
+  <label>Senha</label><input id="pass" type="password" value="admin123" required><button class="primary" style="width:100%;margin-top:15px">Entrar</button></form></div>`;
+  loginForm.onsubmit=async e=>{e.preventDefault();try{const d=await api('/api/login',{method:'POST',body:{email:email.value,password:pass.value}});
+  token=d.token;localStorage.setItem('antonicelli_token',token);me=await api('/api/me');await loadEvents()}catch(err){showLogin(err.message)}}
+}
+async function boot(){
+  const inviteToken=new URLSearchParams(location.search).get('invite');
+  if(inviteToken)return showInviteRegistration(inviteToken);
+  if(!token)return showLogin();
+  try{me=await api('/api/me');await loadEvents()}
+  catch{localStorage.removeItem('antonicelli_token');token=null;showLogin()}
+}
+function logout(){localStorage.removeItem('antonicelli_token');token=null;me=null;showLogin()}
+function userbar(){
+  document.getElementById('userbar').innerHTML=`<div class="userInfo">
+    ${avatarMarkup(me)}
+    <span>${esc(me.name)} · ${esc(roleLabel(me.role))}</span>
+    <button class="secondary" id="profileBtn">Perfil</button>
+    <button class="secondary" id="logoutBtn">Sair</button>
+  </div>`;
+  document.getElementById('profileBtn').onclick=openProfileModal;
+  document.getElementById('logoutBtn').onclick=logout;
+}
+
+
+async function openProfileModal(){
+  const profile=await api('/api/profile');
+  let avatarData=profile.avatar_data||'';
+
+  showModal(`<div class="toolbar" style="margin-bottom:8px">
+    <div><h2 style="margin:0">Editar perfil</h2><div class="small">${esc(profile.email)} · ${esc(roleLabel(profile.role))}</div></div>
+    <button class="secondary" id="closeProfile">Fechar</button>
+  </div>
+
+  <form id="profileForm">
+    <div class="profilePhotoRow">
+      <div id="profileAvatarPreview">${avatarMarkup(profile,true)}</div>
+      <div style="flex:1">
+        <label style="margin-top:0">Foto de perfil</label>
+        <input id="profileAvatarInput" type="file" accept="image/png,image/jpeg,image/webp">
+        <div class="actions" style="margin-top:8px">
+          <button type="button" class="secondary mini" id="removeProfilePhoto">Remover foto</button>
+        </div>
+      </div>
+    </div>
+
+    <label>Nome</label>
+    <input id="profileName" value="${esc(profile.name)}" required>
+
+    <label>E-mail</label>
+    <input value="${esc(profile.email)}" disabled>
+    <div class="small">O e-mail é usado para login e não pode ser alterado nesta tela.</div>
+
+    <div id="profileError"></div>
+    <div class="actions" style="justify-content:flex-end;margin-top:18px">
+      <button class="primary" id="saveProfile">Salvar perfil</button>
+    </div>
+  </form>`);
+
+  document.getElementById('closeProfile').onclick=closeModal;
+  document.getElementById('profileAvatarInput').onchange=async e=>{
+    const file=e.target.files?.[0];
+    if(!file)return;
+    try{
+      avatarData=await resizeAvatarFile(file);
+      document.getElementById('profileAvatarPreview').innerHTML=`<img class="avatarLarge" src="${avatarData}" alt="Prévia da foto">`;
+    }catch(err){alert(err.message);e.target.value=''}
+  };
+
+  document.getElementById('removeProfilePhoto').onclick=()=>{
+    avatarData='';
+    document.getElementById('profileAvatarPreview').innerHTML=`<div class="avatarLarge avatarPlaceholder">${esc(profile.name.charAt(0).toUpperCase())}</div>`;
+    document.getElementById('profileAvatarInput').value='';
+  };
+
+  document.getElementById('profileForm').onsubmit=async e=>{
+    e.preventDefault();
+    const btn=document.getElementById('saveProfile');
+    const box=document.getElementById('profileError');
+    btn.disabled=true;box.innerHTML='';
+    try{
+      me=await api('/api/profile',{
+        method:'PATCH',
+        body:{name:document.getElementById('profileName').value.trim(),avatar_data:avatarData}
+      });
+      closeModal();
+      userbar();
+    }catch(err){
+      box.innerHTML=`<div class="error">${esc(err.message)}</div>`;
+      btn.disabled=false;
+    }
+  };
+}
+
+async function loadEvents(){
+  userbar();const events=await api('/api/events');
+  app.innerHTML=`<div class="toolbar"><div><h1 style="margin:0">Trabalhos em Andamento</h1><div class="small">Gerenciamento de projetos e tarefas</div></div>
+  <div class="actions"><button class="secondary" id="calendarBtn">Calendário de Tarefas</button><button class="secondary" id="myTasksBtn">Minhas tarefas</button>
+  ${me.role==='admin'?'<button class="secondary" id="archivedBtn">Arquivados</button><button class="secondary" id="trashBtn">Lixeira</button><button class="secondary" id="templateBtn">Editar Modelos</button><button class="primary" id="newEventBtn">+ Novo trabalho</button>':''}</div></div>
+  ${events.map(e=>`<div class="card event" data-event-id="${e.id}"><div><div><span class="workTypeBadge">${esc(e.work_type||'Trabalho')}</span><b>${esc(e.name)}</b></div><div class="small" style="margin-top:6px">${[e.client,e.place,workListDate(e)].filter(Boolean).map(esc).join(' · ')||'Sem informações adicionais'}</div></div>
+  <div><div class="small">${e.progress}% concluído</div><div class="progress"><div class="bar" style="width:${e.progress}%"></div></div></div>
+  ${me.role==='admin'?`<div class="listActions"><button class="secondary archiveEvt" data-id="${e.id}" data-name="${esc(e.name)}">Arquivar</button><button class="danger delEvt" data-id="${e.id}" data-name="${esc(e.name)}">Excluir</button></div>`:''}</div>`).join('')||'<div class="card emptyState">Nenhum trabalho em andamento.</div>'}`;
+  calendarBtn.onclick=openCalendar;
+  myTasksBtn.onclick=openMyTasks;
+  if(me.role==='admin'){
+    archivedBtn.onclick=openArchivedEvents;
+    trashBtn.onclick=openTrash;
+    templateBtn.onclick=()=>{templateSummaries=[];openTemplateEditor()};
+    newEventBtn.onclick=openNewEventModal;
+  }
+  document.querySelectorAll('.event').forEach(x=>x.onclick=()=>openEvent(Number(x.dataset.eventId)));
+  document.querySelectorAll('.archiveEvt').forEach(b=>b.onclick=async e=>{
+    e.stopPropagation();
+    if(confirm(`Arquivar o trabalho "${b.dataset.name}"?\n\nEle sairá da lista de Trabalhos em Andamento e ficará disponível em Arquivados.`)){
+      await api('/api/events/'+b.dataset.id+'/archive',{method:'PATCH'});
+      loadEvents();
+    }
+  });
+  document.querySelectorAll('.delEvt').forEach(b=>b.onclick=async e=>{
+    e.stopPropagation();
+    if(confirm(`Mover o trabalho "${b.dataset.name}" para a Lixeira?\n\nEle poderá ser restaurado depois.`)){
+      await api('/api/events/'+b.dataset.id,{method:'DELETE'});
+      loadEvents();
+    }
+  });
+}
+
+let calendarMonthCursor=null,calendarTaskCache=[];
+
+function dateParts(value){
+  if(!value)return null;
+  const m=String(value).slice(0,10).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m?{y:Number(m[1]),m:Number(m[2]),d:Number(m[3])}:null;
+}
+function dateKey(y,m,d){
+  return `${String(y).padStart(4,'0')}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+}
+function utcDateFromKey(key){
+  const p=dateParts(key);
+  return p?new Date(Date.UTC(p.y,p.m-1,p.d)):null;
+}
+function eachTaskDate(task){
+  const start=dateParts(task.start_date);
+  const end=dateParts(task.end_date);
+  if(!start&&!end)return [];
+  const a=start||end;
+  const b=end||start;
+  let startDate=new Date(Date.UTC(a.y,a.m-1,a.d));
+  let endDate=new Date(Date.UTC(b.y,b.m-1,b.d));
+  if(endDate<startDate)[startDate,endDate]=[endDate,startDate];
+  const keys=[];
+  const maxDays=3660;
+  for(let i=0,d=new Date(startDate);d<=endDate&&i<maxDays;i++,d.setUTCDate(d.getUTCDate()+1)){
+    keys.push(dateKey(d.getUTCFullYear(),d.getUTCMonth()+1,d.getUTCDate()));
+  }
+  return keys;
+}
+function tasksByCalendarDate(tasks){
+  const map=new Map();
+  for(const task of tasks){
+    for(const key of eachTaskDate(task)){
+      if(!map.has(key))map.set(key,[]);
+      map.get(key).push(task);
+    }
+  }
+  return map;
+}
+function monthLabel(date){
+  return new Intl.DateTimeFormat('pt-BR',{month:'long',year:'numeric',timeZone:'UTC'}).format(date);
+}
+function formatCalendarDayTitle(key){
+  const d=utcDateFromKey(key);
+  return d?new Intl.DateTimeFormat('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric',timeZone:'UTC'}).format(d):key;
+}
+function taskDateDescription(task){
+  if(task.start_date&&task.end_date)return `${formatDateBR(task.start_date)} a ${formatDateBR(task.end_date)}`;
+  if(task.start_date)return formatDateBR(task.start_date);
+  if(task.end_date)return formatDateBR(task.end_date);
+  return 'Sem data';
+}
+function statusClassName(status){
+  if(status==='Concluída')return 'done';
+  if(status==='Em Andamento')return 'doing';
+  if(status==='Atrasada')return 'late';
+  return 'todo';
+}
+function calendarResponsibles(task){
+  const list=Array.isArray(task.responsibles)?task.responsibles:[];
+  if(!list.length)return '<span class="small">Sem responsável</span>';
+  return list.map(u=>{
+    const initial=esc((u.name||'?').trim().charAt(0).toUpperCase());
+    return u.avatar_data
+      ? `<span class="calendarAvatar" title="${esc(u.name)}"><img src="${u.avatar_data}" alt="${esc(u.name)}" style="width:100%;height:100%;object-fit:cover"></span>`
+      : `<span class="calendarAvatar" title="${esc(u.name)}">${initial}</span>`;
+  }).join('');
+}
+
+async function openCalendar(initialDate=null){
+  userbar();
+  calendarTaskCache=await api('/api/calendar-events');
+  const today=new Date();
+  if(initialDate){
+    const p=dateParts(initialDate);
+    calendarMonthCursor=p?new Date(Date.UTC(p.y,p.m-1,1)):new Date(Date.UTC(today.getFullYear(),today.getMonth(),1));
+  }else if(!calendarMonthCursor){
+    calendarMonthCursor=new Date(Date.UTC(today.getFullYear(),today.getMonth(),1));
+  }
+  renderCalendar();
+}
+
+function renderCalendar(){
+  const monthStart=new Date(calendarMonthCursor);
+  const year=monthStart.getUTCFullYear(),month=monthStart.getUTCMonth();
+  const firstDow=monthStart.getUTCDay();
+  const gridStart=new Date(Date.UTC(year,month,1-firstDow));
+  const byDate=tasksByCalendarDate(calendarTaskCache);
+  const today=new Date();
+  const todayKey=dateKey(today.getFullYear(),today.getMonth()+1,today.getDate());
+  const weekdays=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+
+  const cells=[];
+  for(let i=0;i<42;i++){
+    const d=new Date(gridStart);
+    d.setUTCDate(gridStart.getUTCDate()+i);
+    const key=dateKey(d.getUTCFullYear(),d.getUTCMonth()+1,d.getUTCDate());
+    const tasks=byDate.get(key)||[];
+    const isOutside=d.getUTCMonth()!==month;
+    const items=tasks.slice(0,3).map(t=>`<div class="calendarItem ${statusClassName(t.status)}" title="${esc(t.event_name)} — ${esc(t.task_name)}">${esc(t.task_name)}</div>`).join('');
+    cells.push(`<button type="button" class="calendarDay ${isOutside?'outside':''} ${key===todayKey?'today':''}" data-date="${key}">
+      <div class="calendarDayNum">${d.getUTCDate()}</div>
+      <div class="calendarItems">${items}${tasks.length>3?`<div class="calendarMore">+ ${tasks.length-3} tarefa(s)</div>`:''}</div>
+    </button>`);
+  }
+
+  app.innerHTML=`<div class="toolbar">
+    <div><button class="secondary" id="backFromCalendar">← Voltar para lista</button><h1 style="margin-bottom:4px">Calendário de Tarefas</h1><div class="small">Tarefas pendentes com data de trabalhos em andamento aparecem aqui.</div></div>
+    <button class="secondary" id="calendarTodayBtn">Hoje</button>
+  </div>
+  <div class="calendarToolbar">
+    <button class="secondary" id="prevMonthBtn">← Mês anterior</button>
+    <div class="calendarTitle">${esc(monthLabel(monthStart))}</div>
+    <button class="secondary" id="nextMonthBtn">Próximo mês →</button>
+  </div>
+  <div class="calendarGrid">
+    ${weekdays.map(d=>`<div class="calendarDow">${d}</div>`).join('')}
+    ${cells.join('')}
+  </div>
+  <div class="calendarLegend">Tarefas com data inicial e final aparecem em todos os dias do período. Tarefas concluídas e tarefas sem data não aparecem no calendário.</div>`;
+
+  backFromCalendar.onclick=()=>{calendarMonthCursor=null;loadEvents()};
+  prevMonthBtn.onclick=()=>{calendarMonthCursor=new Date(Date.UTC(year,month-1,1));renderCalendar()};
+  nextMonthBtn.onclick=()=>{calendarMonthCursor=new Date(Date.UTC(year,month+1,1));renderCalendar()};
+  calendarTodayBtn.onclick=()=>{
+    const now=new Date();
+    calendarMonthCursor=new Date(Date.UTC(now.getFullYear(),now.getMonth(),1));
+    renderCalendar();
+  };
+  document.querySelectorAll('.calendarDay').forEach(day=>{
+    day.onclick=()=>openCalendarDay(day.dataset.date,byDate.get(day.dataset.date)||[]);
+  });
+}
+
+function openCalendarDay(date,tasks){
+  const title=formatCalendarDayTitle(date);
+  showModal(`<h2 style="text-transform:capitalize">${esc(title)}</h2>
+    ${tasks.length?tasks.map(t=>`<div class="dayProject">
+      <div class="dayProjectTitle">
+        <span class="workTypeBadge">${esc(t.work_type||'Trabalho')}</span>
+        <b>${esc(t.task_name)}</b>
+        <span class="calendarTaskStatus">${esc(t.status||'Não Iniciada')}</span>
+      </div>
+      <div class="calendarTaskMeta"><b>Trabalho:</b> ${esc(t.event_name)}</div>
+      ${t.phase_name?`<div class="calendarTaskMeta">${esc(t.phase_name)}${t.category_name?' · '+esc(t.category_name):''}</div>`:''}
+      <div class="calendarTaskMeta">${[t.client,t.place].filter(Boolean).map(esc).join(' · ')||'Sem cliente/local informado'}</div>
+      <div class="calendarTaskMeta"><b>Período da tarefa:</b> ${esc(taskDateDescription(t))}</div>
+      <div class="calendarResp">${calendarResponsibles(t)}</div>
+      <div class="actions" style="margin-top:10px">
+        <button class="primary openCalendarProject" data-id="${t.event_id}" data-task-id="${t.task_id}">Abrir trabalho</button>
+      </div>
+    </div>`).join(''):'<div class="small" style="padding:12px 0">Nenhuma tarefa nesta data.</div>'}
+    <div class="actions" style="margin-top:16px;justify-content:flex-end">
+      <button class="secondary" id="closeCalendarDay">← Voltar ao calendário</button>
+    </div>`);
+
+  document.getElementById('closeCalendarDay').onclick=closeModal;
+  document.querySelectorAll('.openCalendarProject').forEach(b=>b.onclick=()=>{
+    closeModal();
+    calendarMonthCursor=null;
+    openEvent(Number(b.dataset.id));
+  });
+}
+
+async function openArchivedEvents(){
+  userbar();
+  const events=await api('/api/events-archived');
+  app.innerHTML=`<div class="toolbar">
+    <div><button class="secondary" id="backFromArchived">← Voltar para lista</button><h1 style="margin-bottom:4px">Trabalhos Arquivados</h1><div class="small">Trabalhos concluídos ou retirados da lista principal.</div></div>
+  </div>
+  ${events.map(e=>`<div class="card event archivedEvent" data-event-id="${e.id}">
+    <div><div><span class="workTypeBadge">${esc(e.work_type||'Trabalho')}</span><b>${esc(e.name)}</b></div>
+      <div class="small" style="margin-top:6px">${[e.client,e.place,workListDate(e)].filter(Boolean).map(esc).join(' · ')||'Sem informações adicionais'}</div>
+      <div class="archiveMeta">Arquivado em ${formatDateTimeBR(e.archived_at)}</div>
+    </div>
+    <div class="listActions">
+      <button class="secondary unarchiveEvt" data-id="${e.id}" data-name="${esc(e.name)}">Desarquivar</button>
+      <button class="danger trashArchivedEvt" data-id="${e.id}" data-name="${esc(e.name)}">Mover para Lixeira</button>
+    </div>
+  </div>`).join('')||'<div class="card emptyState">Nenhum trabalho arquivado.</div>'}`;
+  backFromArchived.onclick=loadEvents;
+  document.querySelectorAll('.archivedEvent').forEach(x=>x.onclick=()=>openEvent(Number(x.dataset.eventId)));
+  document.querySelectorAll('.unarchiveEvt').forEach(b=>b.onclick=async e=>{
+    e.stopPropagation();
+    await api('/api/events/'+b.dataset.id+'/unarchive',{method:'PATCH'});
+    openArchivedEvents();
+  });
+  document.querySelectorAll('.trashArchivedEvt').forEach(b=>b.onclick=async e=>{
+    e.stopPropagation();
+    if(confirm(`Mover o trabalho "${b.dataset.name}" para a Lixeira?\n\nEle poderá ser restaurado depois.`)){
+      await api('/api/events/'+b.dataset.id,{method:'DELETE'});
+      openArchivedEvents();
+    }
+  });
+}
+
+async function openTrash(){
+  userbar();
+  const events=await api('/api/events-trash');
+  app.innerHTML=`<div class="toolbar">
+    <div><button class="secondary" id="backFromTrash">← Voltar para lista</button><h1 style="margin-bottom:4px">Lixeira</h1><div class="small">Trabalhos excluídos podem ser restaurados ou apagados permanentemente.</div></div>
+  </div>
+  <div class="note">A exclusão permanente não pode ser desfeita e remove também as tarefas e dados vinculados ao trabalho.</div>
+  ${events.map(e=>`<div class="card">
+    <div><div><span class="workTypeBadge">${esc(e.work_type||'Trabalho')}</span><b>${esc(e.name)}</b></div>
+      <div class="small" style="margin-top:6px">${[e.client,e.place,workListDate(e)].filter(Boolean).map(esc).join(' · ')||'Sem informações adicionais'}</div>
+      <div class="archiveMeta">Excluído em ${formatDateTimeBR(e.deleted_at)}</div>
+    </div>
+    <div class="listActions">
+      <button class="secondary restoreEvt" data-id="${e.id}" data-name="${esc(e.name)}">Restaurar</button>
+      <button class="danger permanentEvt" data-id="${e.id}" data-name="${esc(e.name)}">Excluir permanentemente</button>
+    </div>
+  </div>`).join('')||'<div class="card emptyState">A Lixeira está vazia.</div>'}`;
+  backFromTrash.onclick=loadEvents;
+  document.querySelectorAll('.restoreEvt').forEach(b=>b.onclick=async()=>{
+    await api('/api/events/'+b.dataset.id+'/restore',{method:'PATCH'});
+    openTrash();
+  });
+  document.querySelectorAll('.permanentEvt').forEach(b=>b.onclick=async()=>{
+    if(confirm(`EXCLUSÃO PERMANENTE\n\nDeseja apagar definitivamente "${b.dataset.name}"?\n\nEsta ação não pode ser desfeita.`)){
+      await api('/api/events/'+b.dataset.id+'/permanent',{method:'DELETE'});
+      openTrash();
+    }
+  });
+}
+
+function formatDateTimeBR(value){
+  if(!value)return '';
+  const d=new Date(value);
+  if(Number.isNaN(d.getTime()))return '';
+  return d.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+
+async function openMyTasks(){
+  const tasks=await api('/api/my-tasks');
+  app.innerHTML=`<div class="toolbar"><div><button class="secondary" id="backHome">← Trabalhos</button><h1>Minhas tarefas</h1></div></div>
+  ${tasks.map(t=>`<div class="card"><b>${esc(t.name)}</b><div class="small">${esc(t.event_name)} · ${esc(t.phase_name)} / ${esc(t.category_name)} · ${esc(t.status)}</div>
+  <div style="margin-top:10px"><button class="secondary openTaskEvent" data-id="${t.event_id}">Abrir evento</button></div></div>`).join('')||'<div class="card small">Nenhuma tarefa atribuída a você.</div>'}`;
+  backHome.onclick=loadEvents;document.querySelectorAll('.openTaskEvent').forEach(b=>b.onclick=()=>openEvent(Number(b.dataset.id)));
+}
+
+async function openNewEventModal(){
+  const templates=await api('/api/templates');
+  if(!templates.length){
+    alert('Crie pelo menos um modelo antes de criar um trabalho.');
+    return openTemplateEditor();
+  }
+  showModal(`<h2>Novo trabalho</h2><form id="newEventForm">
+  <label>Modelo do trabalho</label>
+  <select id="eventTemplate" required>
+    <option value="">Selecione um modelo...</option>
+    ${templates.map(t=>`<option value="${t.id}">${esc(t.type_label||t.name)} — ${esc(t.name)}</option>`).join('')}
+  </select>
+  <label>Nome do cliente</label><input id="eventClient">
+  <label>Nome do trabalho</label><input id="eventName" required>
+  <div class="detailGrid"><div><label>Data de início <span class="small">(opcional)</span></label><input id="eventDate" type="date"></div><div><label>Data de término</label><input id="eventEndDate" type="date"></div></div>
+  <label>Local</label><input id="eventPlace">
+  <label>Número de participantes</label><input id="eventParticipants" type="number" min="0" step="1">
+  <label>Informações adicionais</label><textarea id="eventAdditionalInfo" placeholder="Opcional"></textarea>
+  <div id="eventError"></div>
+  <div class="actions" style="justify-content:flex-end;margin-top:18px"><button type="button" class="secondary" id="cancelEventBtn">Cancelar</button><button class="primary" id="createEventBtn">Criar trabalho</button></div></form>`);
+  cancelEventBtn.onclick=closeModal;
+  newEventForm.onsubmit=async e=>{
+    e.preventDefault();createEventBtn.disabled=true;
+    try{
+      const r=await api('/api/events',{method:'POST',body:{
+        template_id:Number(eventTemplate.value),
+        name:eventName.value.trim(),
+        client:eventClient.value.trim(),
+        event_date:eventDate.value||null,
+        end_date:eventEndDate.value||null,
+        place:eventPlace.value.trim(),
+        participants:eventParticipants.value===''?null:Number(eventParticipants.value),
+        additional_info:eventAdditionalInfo.value.trim()
+      }});
+      closeModal();openEvent(r.id)
+    }catch(err){eventError.innerHTML=`<div class="error">${esc(err.message)}</div>`;createEventBtn.disabled=false}
+  }
+}
+
+async function manageMembers(){
+  allUsers=await api('/api/users');
+  currentEvent=await api('/api/events/'+currentEvent.id);
+  const memberIds=new Set(currentEvent.members.map(m=>Number(m.id)));
+
+  showModal(`<div class="toolbar" style="margin-bottom:10px">
+    <div><h2 style="margin:0">Colaboradores do evento</h2><div class="small">Gerencie quem pode acessar este evento.</div></div>
+    <button class="secondary" id="closeMembers">Fechar</button>
+  </div>
+
+  <div class="card" style="padding:14px">
+    <h3 style="margin-top:0">Adicionar colaborador existente</h3>
+    <select id="memberSelect">
+      <option value="">Selecione...</option>
+      ${allUsers.filter(u=>u.active&&!memberIds.has(Number(u.id)))
+        .map(u=>`<option value="${u.id}">${esc(u.name)} · ${esc(roleLabel(u.role))}</option>`).join('')}
+    </select>
+    <button class="primary" id="addMemberBtn" style="margin-top:8px">Adicionar ao evento</button>
+  </div>
+
+  <div class="card" style="padding:14px">
+    <h3 style="margin-top:0">Convidar novo colaborador</h3>
+    <div class="small">A pessoa receberá um link para criar a senha e concluir o cadastro.</div>
+    <label>Nome</label><input id="inviteMemberName">
+    <label>E-mail</label><input id="inviteMemberEmail" type="email">
+    <label>Nível de acesso</label>
+    <select id="inviteMemberRole">
+      <option value="admin">Administrador</option>
+      <option value="collaborator" selected>Colaborador</option>
+      <option value="guest">Convidado</option>
+    </select>
+    <div id="inviteMemberResult"></div>
+    <button class="primary" id="inviteMemberBtn" style="margin-top:8px">Enviar convite</button>
+  </div>
+
+  <h3>Pessoas com acesso a este evento</h3>
+  <div>
+    ${currentEvent.members.map(m=>`<div class="member">
+      <div><b>${esc(m.name)}</b><div class="small">${esc(m.email)} · ${esc(roleLabel(m.role))}</div></div>
+      <div class="actions">
+        <button class="secondary mini removeMember" data-id="${m.id}">Remover do evento</button>
+        ${m.role!=='admin'?`<button class="danger mini deleteCollaborator" data-id="${m.id}" data-name="${esc(m.name)}">Excluir colaborador</button>`:''}
+      </div>
+    </div>`).join('')||'<div class="small">Nenhum colaborador adicionado.</div>'}
+  </div>`);
+
+  document.getElementById('closeMembers').onclick=closeModal;
+
+  document.getElementById('addMemberBtn').onclick=async()=>{
+    const v=document.getElementById('memberSelect').value;
+    if(!v)return;
+    await api('/api/events/'+currentEvent.id+'/members',{method:'POST',body:{user_id:Number(v)}});
+    await manageMembers();
+  };
+
+  document.getElementById('inviteMemberBtn').onclick=async()=>{
+    const btn=document.getElementById('inviteMemberBtn');
+    const box=document.getElementById('inviteMemberResult');
+    const name=document.getElementById('inviteMemberName').value.trim();
+    const email=document.getElementById('inviteMemberEmail').value.trim();
+    const role=document.getElementById('inviteMemberRole').value;
+    if(!name||!email){
+      box.innerHTML='<div class="error">Informe nome e e-mail.</div>';
+      return;
+    }
+    btn.disabled=true;box.innerHTML='';
+    try{
+      const r=await api('/api/events/'+currentEvent.id+'/invitations',{
+        method:'POST',body:{name,email,role}
+      });
+      box.innerHTML=r.sent
+        ? '<div class="note">Convite enviado por e-mail.</div>'
+        : `<div class="note"><b>Convite criado.</b><br>O SMTP ainda não está configurado, então o e-mail não foi enviado. Para teste, use este link:<br><input value="${esc(r.invite_url)}" readonly onclick="this.select()"></div>`;
+      document.getElementById('inviteMemberName').value='';
+      document.getElementById('inviteMemberEmail').value='';
+    }catch(err){
+      box.innerHTML=`<div class="error">${esc(err.message)}</div>`;
+    }finally{btn.disabled=false}
+  };
+
+  document.querySelectorAll('.removeMember').forEach(b=>b.onclick=async()=>{
+    if(confirm('Remover esta pessoa apenas deste evento?')){
+      await api('/api/events/'+currentEvent.id+'/members/'+b.dataset.id,{method:'DELETE'});
+      await manageMembers();
+    }
+  });
+
+  document.querySelectorAll('.deleteCollaborator').forEach(b=>b.onclick=async()=>{
+    if(confirm(`Excluir ${b.dataset.name} da plataforma? O acesso será desativado e a pessoa será removida de todos os eventos. O histórico será preservado.`)){
+      await api('/api/users/'+b.dataset.id,{method:'DELETE'});
+      await manageMembers();
+    }
+  });
+}
+
+function statusClass(v){
+  return {'Não Iniciada':'status-nao-iniciada','Em Andamento':'status-em-andamento','Concluída':'status-concluida','Atrasada':'status-atrasada'}[v]||'status-nao-iniciada';
+}
+function statusOptions(current){
+  return ['Não Iniciada','Em Andamento','Concluída','Atrasada'].map(x=>`<option ${x===current?'selected':''}>${x}</option>`).join('');
+}
+function dateValue(v){return v?String(v).slice(0,10):''}
+function openTaskDetails(task){
+  const canEdit=['admin','collaborator'].includes(me.role);
+  const canStructure=['admin','collaborator'].includes(me.role);
+
+  showModal(`<div class="toolbar" style="margin-bottom:8px">
+    <div><h2 style="margin:0">Detalhes da tarefa</h2><div class="small">${esc(task.phase_name)} · ${esc(task.category_name)}</div></div>
+    <button class="secondary" id="closeTaskDetails">Fechar</button>
+  </div>
+
+  <form id="taskDetailsForm">
+    <label>Nome da tarefa</label>
+    <input id="taskDetailName" value="${esc(task.name)}" ${canStructure?'':'disabled'}>
+
+    <div class="detailGrid">
+      <div><label>Status</label><select id="taskDetailStatus" class="statusSelect ${statusClass(task.status)}" ${canEdit?'':'disabled'}>${statusOptions(task.status)}</select></div>
+      <div>
+        <label>Responsáveis</label>
+        <div class="responsibleChecks" id="taskDetailResponsibles">
+          ${currentEvent.members.filter(m=>m.role!=='guest').map(m=>{
+            const checked=(task.responsibles||[]).some(r=>Number(r.id)===Number(m.id));
+            return `<label><input type="checkbox" value="${m.id}" ${checked?'checked':''} ${canStructure?'':'disabled'}>${avatarMarkup(m)} <span>${esc(m.name)}</span></label>`;
+          }).join('')||'<div class="small">Nenhum colaborador disponível.</div>'}
+        </div>
+      </div>
+    </div>
+
+    <div class="detailGrid">
+      <div><label>Data inicial</label><input id="taskStartDate" type="date" value="${dateValue(task.start_date)}" ${canEdit?'':'disabled'}></div>
+      <div><label>Data final</label><input id="taskEndDate" type="date" value="${dateValue(task.end_date)}" ${canEdit?'':'disabled'}></div>
+    </div>
+
+    <label>Anotações</label>
+    <textarea id="taskNotes" placeholder="Informações, pendências, contatos, decisões, links e demais detalhes da tarefa..." ${canEdit?'':'disabled'}>${esc(task.notes||'')}</textarea>
+    <div id="taskDetailError"></div>
+    <div class="actions" style="justify-content:flex-end;margin-top:18px">${canEdit||canStructure?'<button class="primary" id="saveTaskDetails">Salvar alterações</button>':''}</div>
+  </form>`);
+
+  document.getElementById('closeTaskDetails').onclick=closeModal;
+  const statusEl=document.getElementById('taskDetailStatus');
+  if(statusEl)statusEl.onchange=()=>{statusEl.className='statusSelect '+statusClass(statusEl.value)};
+
+  if(canEdit||canStructure){
+    document.getElementById('taskDetailsForm').onsubmit=async e=>{
+      e.preventDefault();
+      const btn=document.getElementById('saveTaskDetails');
+      const box=document.getElementById('taskDetailError');
+      btn.disabled=true;box.innerHTML='';
+      try{
+        const body={
+          status:document.getElementById('taskDetailStatus').value,
+          start_date:document.getElementById('taskStartDate').value||null,
+          end_date:document.getElementById('taskEndDate').value||null,
+          notes:document.getElementById('taskNotes').value
+        };
+        if(canStructure){
+          body.name=document.getElementById('taskDetailName').value.trim();
+          body.responsible_user_ids=[...document.querySelectorAll('#taskDetailResponsibles input[type="checkbox"]:checked')]
+            .map(x=>Number(x.value));
+        }
+        await api('/api/tasks/'+task.id,{method:'PATCH',body});
+        closeModal();await openEvent(currentEvent.id);
+      }catch(err){
+        box.innerHTML=`<div class="error">${esc(err.message)}</div>`;
+        btn.disabled=false;
+      }
+    };
+  }
+}
+
+
+function responsibleIds(task){
+  return (task.responsibles||[]).map(r=>String(r.id));
+}
+function responsibleAvatars(task){
+  const rs=task.responsibles||[];
+  if(!rs.length)return '';
+  return `<div class="avatarStack" title="${esc(rs.map(r=>r.name).join(', '))}">
+    ${rs.map(r=>avatarMarkup(r)).join('')}
+  </div>`;
+}
+function filterTasks(){
+  const status=document.getElementById('filterStatus')?.value||'';
+  const resp=document.getElementById('filterResp')?.value||'';
+  const phase=document.getElementById('filterPhase')?.value||'';
+
+  document.querySelectorAll('.task').forEach(task=>{
+    const matchesStatus=!status||task.dataset.status===status;
+    const matchesResp=!resp||(task.dataset.resp||'').split(',').includes(resp);
+    const matchesPhase=!phase||task.dataset.phase===phase;
+    task.classList.toggle('hidden',!(matchesStatus&&matchesResp&&matchesPhase));
+  });
+
+  document.querySelectorAll('.cat').forEach(cat=>{
+    const hasVisibleTask=[...cat.querySelectorAll('.task')].some(task=>!task.classList.contains('hidden'));
+    cat.classList.toggle('hidden',!hasVisibleTask);
+  });
+
+  document.querySelectorAll('.phaseSection').forEach(section=>{
+    const hasVisibleCategory=[...section.querySelectorAll('.cat')].some(cat=>!cat.classList.contains('hidden'));
+    section.classList.toggle('hidden',!hasVisibleCategory);
+  });
+}
+
+function renameEventCategory(phaseName,oldName){
+  const newName=prompt('Novo nome da categoria:',oldName);
+  if(!newName||newName.trim()===oldName)return;
+  api('/api/events/'+currentEvent.id+'/categories',{
+    method:'PATCH',
+    body:{phase_name:phaseName,old_name:oldName,new_name:newName.trim()}
+  }).then(()=>openEvent(currentEvent.id)).catch(e=>alert(e.message));
+}
+
+function dragAfterElement(container,y){
+  const els=[...container.querySelectorAll('.task:not(.dragging)')];
+  return els.reduce((closest,child)=>{
+    const box=child.getBoundingClientRect();
+    const offset=y-box.top-box.height/2;
+    if(offset<0&&offset>closest.offset)return {offset,element:child};
+    return closest;
+  },{offset:Number.NEGATIVE_INFINITY,element:null}).element;
+}
+
+async function saveTaskOrder(){
+  const items=[];
+  document.querySelectorAll('.taskDropzone').forEach(zone=>{
+    zone.querySelectorAll(':scope > .task').forEach(task=>{
+      items.push({
+        id:Number(task.dataset.taskId),
+        phase_name:zone.dataset.phase,
+        category_name:zone.dataset.category
+      });
+    });
+  });
+  if(!items.length)return;
+  await api('/api/events/'+currentEvent.id+'/reorder-tasks',{method:'POST',body:{items}});
+  await openEvent(currentEvent.id);
+}
+
+function bindDragAndDrop(){
+  if(me.role!=='admin')return;
+  let dragged=null;
+
+  document.querySelectorAll('.task').forEach(task=>{
+    task.setAttribute('draggable','true');
+
+    task.addEventListener('dragstart',e=>{
+      dragged=task;
+      task.classList.add('dragging');
+      e.dataTransfer.effectAllowed='move';
+      e.dataTransfer.setData('text/plain',task.dataset.taskId);
+    });
+
+    task.addEventListener('dragend',()=>{
+      task.classList.remove('dragging');
+      document.querySelectorAll('.taskDropzone').forEach(z=>z.classList.remove('drag-over'));
+    });
+  });
+
+  document.querySelectorAll('.taskDropzone').forEach(zone=>{
+    zone.addEventListener('dragover',e=>{
+      e.preventDefault();
+      zone.classList.add('drag-over');
+      if(!dragged)return;
+      const after=dragAfterElement(zone,e.clientY);
+      if(after==null)zone.appendChild(dragged);
+      else zone.insertBefore(dragged,after);
+    });
+
+    zone.addEventListener('dragleave',e=>{
+      if(!zone.contains(e.relatedTarget))zone.classList.remove('drag-over');
+    });
+
+    zone.addEventListener('drop',async e=>{
+      e.preventDefault();
+      zone.classList.remove('drag-over');
+      try{await saveTaskOrder()}catch(err){alert(err.message);await openEvent(currentEvent.id)}
+    });
+  });
+}
+
+
+function workListDate(e){
+  if(e.event_date&&e.end_date)return `${formatDateBR(e.event_date)} a ${formatDateBR(e.end_date)}`;
+  if(e.event_date)return formatDateBR(e.event_date);
+  if(e.end_date)return formatDateBR(e.end_date);
+  return '';
+}
+function formatDateBR(v){
+  if(!v)return 'Não informado';
+  const d=String(v).slice(0,10).split('-');
+  return d.length===3?`${d[2]}/${d[1]}/${d[0]}`:v;
+}
+
+function openEventDetailsModal(){
+  if(me.role!=='admin')return;
+
+  showModal(`<div class="toolbar" style="margin-bottom:8px">
+    <div><h2 style="margin:0">Mais detalhes do evento</h2><div class="small">Edite as informações gerais do evento.</div></div>
+    <button class="secondary" id="closeEventDetails">Fechar</button>
+  </div>
+
+  <form id="eventDetailsForm">
+    <label>Nome do cliente</label>
+    <input id="detailClient" value="${esc(currentEvent.client||'')}">
+
+    <label>Nome do trabalho</label>
+    <input id="detailEventName" value="${esc(currentEvent.name||'')}" required>
+
+    <div class="detailGrid">
+      <div><label>Data de início <span class="small">(opcional)</span></label><input id="detailStartDate" type="date" value="${dateValue(currentEvent.event_date)}"></div>
+      <div><label>Data de término</label><input id="detailEndDate" type="date" value="${dateValue(currentEvent.end_date)}"></div>
+    </div>
+
+    <label>Local</label>
+    <input id="detailPlace" value="${esc(currentEvent.place||'')}">
+
+    <label>Número de participantes</label>
+    <input id="detailParticipants" type="number" min="0" step="1" value="${currentEvent.participants??''}">
+
+    <label>Informações adicionais</label>
+    <textarea id="detailAdditionalInfo" placeholder="Informações extras sobre o evento...">${esc(currentEvent.additional_info||'')}</textarea>
+
+    <div id="eventDetailsError"></div>
+    <div class="actions" style="justify-content:flex-end;margin-top:18px">
+      <button class="primary" id="saveEventDetails">Salvar alterações</button>
+    </div>
+  </form>`);
+
+  document.getElementById('closeEventDetails').onclick=closeModal;
+  document.getElementById('eventDetailsForm').onsubmit=async e=>{
+    e.preventDefault();
+    const btn=document.getElementById('saveEventDetails');
+    const box=document.getElementById('eventDetailsError');
+    btn.disabled=true;box.innerHTML='';
+    try{
+      await api('/api/events/'+currentEvent.id,{
+        method:'PATCH',
+        body:{
+          client:document.getElementById('detailClient').value.trim(),
+          name:document.getElementById('detailEventName').value.trim(),
+          event_date:document.getElementById('detailStartDate').value||null,
+          end_date:document.getElementById('detailEndDate').value||null,
+          place:document.getElementById('detailPlace').value.trim(),
+          participants:document.getElementById('detailParticipants').value===''?null:Number(document.getElementById('detailParticipants').value),
+          additional_info:document.getElementById('detailAdditionalInfo').value
+        }
+      });
+      closeModal();
+      await openEvent(currentEvent.id);
+    }catch(err){
+      box.innerHTML=`<div class="error">${esc(err.message)}</div>`;
+      btn.disabled=false;
+    }
+  };
+}
+
+async function openEvent(id){
+  currentEvent=await api('/api/events/'+id);
+  const grouped={};
+  for(const t of currentEvent.tasks){
+    if(!grouped[t.phase_name])grouped[t.phase_name]={};
+    if(!grouped[t.phase_name][t.category_name])grouped[t.phase_name][t.category_name]=[];
+    grouped[t.phase_name][t.category_name].push(t);
+  }
+  const phases=[...new Set(currentEvent.tasks.map(t=>t.phase_name))];
+
+  app.innerHTML=`<div class="toolbar">
+    <div><button class="secondary" id="backBtn">← Voltar para lista</button><h1>${esc(currentEvent.name)}</h1></div>
+    <div class="actions">
+      ${me.role==='admin'?'<button class="secondary" id="eventDetailsBtn">Mais detalhes</button><button class="secondary" id="membersBtn">Colaboradores</button>':''}
+    </div>
+  </div>
+
+  <div class="eventSummary">
+    <div class="summaryItem"><div class="summaryLabel">Cliente</div><div class="summaryValue">${esc(currentEvent.client||'Não informado')}</div></div>
+    <div class="summaryItem"><div class="summaryLabel">Início</div><div class="summaryValue">${formatDateBR(currentEvent.event_date)}</div></div>
+    <div class="summaryItem"><div class="summaryLabel">Término</div><div class="summaryValue">${formatDateBR(currentEvent.end_date)}</div></div>
+    <div class="summaryItem"><div class="summaryLabel">Local</div><div class="summaryValue">${esc(currentEvent.place||'Não informado')}</div></div>
+    <div class="summaryItem"><div class="summaryLabel">Participantes</div><div class="summaryValue">${currentEvent.participants??'Não informado'}</div></div>
+  </div>
+
+  
+
+  <div class="filters card">
+    <select id="filterStatus"><option value="">Todos os status</option>${['Não Iniciada','Em Andamento','Concluída','Atrasada'].map(x=>`<option>${x}</option>`).join('')}</select>
+    <select id="filterResp"><option value="">Todos os responsáveis</option><option value="none">Sem responsável</option>${currentEvent.members.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('')}</select>
+    <select id="filterPhase"><option value="">Todas as fases</option>${phases.map(p=>`<option>${esc(p)}</option>`).join('')}</select>
+  </div>
+
+  ${Object.entries(grouped).map(([phase,cats])=>`<section class="phaseSection" data-phase="${esc(phase)}">
+    <h2>${esc(phase)}</h2>
+    ${Object.entries(cats).map(([cat,tasks])=>`<div class="cat">
+      <div class="cathead">
+        <div class="catTitle"><span>${esc(cat)}</span></div>
+        ${['admin','collaborator'].includes(me.role)?`<div class="actions">
+          <button class="primary mini addTaskInCategory" data-phase="${esc(phase)}" data-category="${esc(cat)}">+ Nova tarefa</button>
+          ${me.role==='admin'?`<button class="secondary mini renameCategory" data-phase="${esc(phase)}" data-category="${esc(cat)}">Renomear categoria</button>`:''}
+        </div>`:''}
+      </div>
+      <div class="taskrow taskDropzone" data-phase="${esc(phase)}" data-category="${esc(cat)}">
+        ${tasks.map(t=>`<div class="task" data-task-id="${t.id}" data-status="${esc(t.status)}" data-resp="${responsibleIds(t).join(',')||'none'}" data-phase="${esc(t.phase_name)}">
+          <div style="display:flex;align-items:flex-start;gap:8px">
+            ${me.role==='admin'?'<span class="dragHandle" title="Arrastar tarefa">⋮⋮</span>':''}
+            <div><span class="taskName">${esc(t.name)}</span>${String(t.notes||'').trim()?'<span class="noteIcon" title="Esta tarefa possui anotações">📝</span>':''}${(t.start_date||t.end_date)?`<div class="small">${t.start_date?'Início: '+formatDateBR(t.start_date):''}${t.start_date&&t.end_date?' · ':''}${t.end_date?'Fim: '+formatDateBR(t.end_date):''}</div>`:''}</div>
+          </div>
+          <select class="taskStatus statusSelect ${statusClass(t.status)}" data-id="${t.id}" ${me.role==='guest'?'disabled':''}>${statusOptions(t.status)}</select>
+          ${(t.responsibles||[]).length
+            ? responsibleAvatars(t)
+            : (me.role==='guest'
+                ? '<span class="small">Sem responsável</span>'
+                : `<select class="taskRespQuick responsiblePicker" data-id="${t.id}">
+                    <option value="">Selecionar responsável...</option>
+                    ${currentEvent.members.filter(m=>m.role!=='guest').map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('')}
+                  </select>`)}
+          ${['admin','collaborator'].includes(me.role)?`<div class="actions"><button class="danger mini deleteTask" data-id="${t.id}">Excluir</button></div>`:''}
+        </div>`).join('')}
+      </div>
+    </div>`).join('')}
+  </section>`).join('')}`;
+
+  document.getElementById('backBtn').onclick=loadEvents;
+  document.getElementById('filterStatus').onchange=filterTasks;
+  document.getElementById('filterResp').onchange=filterTasks;
+  document.getElementById('filterPhase').onchange=filterTasks;
+
+  if(me.role==='admin'){
+    document.getElementById('eventDetailsBtn').onclick=openEventDetailsModal;
+    document.getElementById('membersBtn').onclick=manageMembers;
+    document.querySelectorAll('.renameCategory').forEach(b=>b.onclick=e=>{
+      e.stopPropagation();
+      renameEventCategory(b.dataset.phase,b.dataset.category);
+    });
+  }
+  if(['admin','collaborator'].includes(me.role)){
+    document.querySelectorAll('.addTaskInCategory').forEach(b=>b.onclick=e=>{
+      e.stopPropagation();
+      addTaskToCategory(b.dataset.phase,b.dataset.category);
+    });
+  }
+
+  document.querySelectorAll('.task').forEach(row=>{
+    row.addEventListener('click',e=>{
+      if(e.target.closest('select,button,.dragHandle'))return;
+      const t=currentEvent.tasks.find(x=>String(x.id)===String(row.dataset.taskId));
+      if(t)openTaskDetails(t);
+    });
+  });
+
+  document.querySelectorAll('.taskStatus').forEach(sel=>sel.onchange=async e=>{
+    e.stopPropagation();
+    try{await api('/api/tasks/'+sel.dataset.id,{method:'PATCH',body:{status:sel.value}});await openEvent(currentEvent.id)}
+    catch(err){alert(err.message);await openEvent(currentEvent.id)}
+  });
+
+  document.querySelectorAll('.taskRespQuick').forEach(sel=>sel.onchange=async e=>{
+    e.stopPropagation();
+    if(!sel.value)return;
+    try{
+      await api('/api/tasks/'+sel.dataset.id,{
+        method:'PATCH',
+        body:{responsible_user_ids:[Number(sel.value)]}
+      });
+      await openEvent(currentEvent.id);
+    }catch(err){alert(err.message)}
+  });
+
+  if(['admin','collaborator'].includes(me.role)){
+    document.querySelectorAll('.deleteTask').forEach(b=>b.onclick=async e=>{
+      e.stopPropagation();
+      if(confirm('Excluir tarefa deste evento?')){
+        await api('/api/tasks/'+b.dataset.id,{method:'DELETE'});
+        await openEvent(currentEvent.id);
+      }
+    });
+  }
+
+  bindDragAndDrop();
+}
+
+
+function addTaskToCategory(phaseName,categoryName){
+  showModal(`<h2>Nova tarefa</h2>
+    <div class="note">A tarefa será adicionada em <b>${esc(phaseName)}</b> → <b>${esc(categoryName)}</b>.</div>
+    <form id="categoryTaskForm">
+      <label>Nome da tarefa</label>
+      <input id="categoryTaskName" required autofocus>
+      <div id="categoryTaskError"></div>
+      <div class="actions" style="justify-content:flex-end;margin-top:18px">
+        <button type="button" class="secondary" id="categoryTaskCancel">Cancelar</button>
+        <button class="primary" id="categoryTaskSave">Adicionar tarefa</button>
+      </div>
+    </form>`);
+
+  document.getElementById('categoryTaskCancel').onclick=closeModal;
+  document.getElementById('categoryTaskForm').onsubmit=async e=>{
+    e.preventDefault();
+    const btn=document.getElementById('categoryTaskSave');
+    const err=document.getElementById('categoryTaskError');
+    btn.disabled=true;err.innerHTML='';
+    try{
+      await api('/api/events/'+currentEvent.id+'/tasks',{
+        method:'POST',
+        body:{
+          phase_name:phaseName,
+          category_name:categoryName,
+          name:document.getElementById('categoryTaskName').value.trim()
+        }
+      });
+      closeModal();
+      await openEvent(currentEvent.id);
+    }catch(ex){
+      err.innerHTML=`<div class="error">${esc(ex.message)}</div>`;
+      btn.disabled=false;
+    }
+  };
+}
+
+
+async function openTemplateEditor(selectedId=null,forceList=false){
+  // V3.5.1: a lista de modelos é carregada uma única vez e contém só metadados.
+  if(forceList||!templateSummaries.length){
+    templateSummaries=await api('/api/templates');
+  }
+
+  const selectedSummary=templateSummaries.find(t=>Number(t.id)===Number(selectedId))||templateSummaries[0]||null;
+  currentTemplate=selectedSummary?await api('/api/templates/'+selectedSummary.id):null;
+
+  // Atualiza no cache somente os metadados do modelo que acabou de ser carregado.
+  if(currentTemplate){
+    const ix=templateSummaries.findIndex(t=>Number(t.id)===Number(currentTemplate.id));
+    const summary={
+      id:currentTemplate.id,
+      name:currentTemplate.name,
+      type_label:currentTemplate.type_label,
+      version:currentTemplate.version,
+      active:currentTemplate.active,
+      created_at:currentTemplate.created_at
+    };
+    if(ix>=0)templateSummaries[ix]={...templateSummaries[ix],...summary};
+    else templateSummaries.push(summary);
+  }
+
+  app.innerHTML=`<div class="toolbar">
+    <div><button class="secondary" id="backEvents">← Trabalhos</button><h1 style="margin-bottom:4px">Modelos de trabalho</h1><div class="small">Cada modelo possui suas próprias fases, categorias e tarefas.</div></div>
+    <button class="primary" id="newTemplateBtn">+ Novo modelo</button>
+  </div>
+  <div class="note">Ao criar um trabalho, você escolhe qual modelo será copiado. Alterações posteriores no modelo não mudam trabalhos já criados.</div>
+
+  ${templateSummaries.length?`<div class="modelTabs">
+    ${templateSummaries.map(t=>`<button class="modelTab ${currentTemplate&&Number(t.id)===Number(currentTemplate.id)?'active':''}" data-id="${t.id}">
+      <div><span class="workTypeBadge">${esc(t.type_label||'Trabalho')}</span><b>${esc(t.name)}</b></div>
+      <div class="small">Versão ${t.version}</div>
+    </button>`).join('')}
+  </div>`:'<div class="card small">Nenhum modelo cadastrado. Crie o primeiro modelo para começar.</div>'}
+
+  ${currentTemplate?`<div class="card">
+    <div class="modelHeader">
+      <div><h2 style="margin:0">${esc(currentTemplate.name)}</h2><div class="small">Tipo: ${esc(currentTemplate.type_label||'Trabalho')} · Versão ${currentTemplate.version}</div></div>
+      <div class="actions"><button class="secondary" id="editTemplateMeta">Editar nome/tipo</button><button class="primary" id="addPhase">+ Nova fase</button></div>
+    </div>
+  </div>
+
+  ${currentTemplate.phases.map(p=>`<div class="card">
+    <div class="phaseHead"><h2>${esc(p.name)}</h2><div class="actions">
+      <button class="secondary mini renameTplPhase" data-id="${p.id}" data-name="${esc(p.name)}">Renomear fase</button>
+      <button class="danger mini delTplPhase" data-id="${p.id}">Excluir fase</button>
+      <button class="primary mini addCat" data-id="${p.id}">+ Categoria</button>
+    </div></div>
+    ${p.categories.map(c=>`<div class="templateCategory">
+      <div class="cathead"><span>${esc(c.name)}</span><div class="actions">
+        <button class="secondary mini renameTplCategory" data-id="${c.id}" data-name="${esc(c.name)}">Renomear</button>
+        <button class="danger mini delTplCategory" data-id="${c.id}">Excluir</button>
+        <button class="primary mini addTplTask" data-id="${c.id}">+ Tarefa</button>
+      </div></div>
+      ${c.tasks.map(t=>`<div class="tplTask"><span>${esc(t.name)}</span><div class="actions">
+        <button class="secondary mini renameTplTask" data-id="${t.id}" data-name="${esc(t.name)}">Editar</button>
+        <button class="danger mini delTplTask" data-id="${t.id}">Excluir</button>
+      </div></div>`).join('')||'<div class="small" style="padding:8px 0">Nenhuma tarefa nesta categoria.</div>'}
+    </div>`).join('')||'<div class="small">Nenhuma categoria nesta fase.</div>'}
+  </div>`).join('')||'<div class="card small">Este modelo ainda não possui fases.</div>'}`:''}`;
+
+  document.getElementById('backEvents').onclick=loadEvents;
+  document.getElementById('newTemplateBtn').onclick=openNewTemplateModal;
+
+  // Trocar de modelo agora baixa somente a estrutura do modelo escolhido.
+  document.querySelectorAll('.modelTab').forEach(b=>b.onclick=()=>openTemplateEditor(Number(b.dataset.id),false));
+  if(!currentTemplate)return;
+
+  const refreshCurrent=()=>openTemplateEditor(currentTemplate.id,false);
+
+  document.getElementById('editTemplateMeta').onclick=()=>openEditTemplateMeta(currentTemplate);
+  document.getElementById('addPhase').onclick=()=>promptCreate('/api/template/phases',{template_id:currentTemplate.id},'Nome da fase','name',refreshCurrent);
+  document.querySelectorAll('.addCat').forEach(b=>b.onclick=()=>promptCreate('/api/template/categories',{phase_id:Number(b.dataset.id)},'Nome da categoria','name',refreshCurrent));
+  document.querySelectorAll('.addTplTask').forEach(b=>b.onclick=()=>promptCreate('/api/template/tasks',{category_id:Number(b.dataset.id)},'Nome da tarefa','name',refreshCurrent));
+
+  document.querySelectorAll('.renameTplPhase').forEach(b=>b.onclick=async()=>{
+    const v=prompt('Novo nome da fase:',b.dataset.name); if(!v||v.trim()===b.dataset.name)return;
+    await api('/api/template/phases/'+b.dataset.id,{method:'PATCH',body:{name:v.trim()}}); await refreshCurrent();
+  });
+  document.querySelectorAll('.delTplPhase').forEach(b=>b.onclick=async()=>{
+    if(confirm('Excluir esta fase e todas as categorias/tarefas dentro dela?')){await api('/api/template/phases/'+b.dataset.id,{method:'DELETE'});await refreshCurrent()}
+  });
+  document.querySelectorAll('.renameTplCategory').forEach(b=>b.onclick=async()=>{
+    const v=prompt('Novo nome da categoria:',b.dataset.name); if(!v||v.trim()===b.dataset.name)return;
+    await api('/api/template/categories/'+b.dataset.id,{method:'PATCH',body:{name:v.trim()}}); await refreshCurrent();
+  });
+  document.querySelectorAll('.delTplCategory').forEach(b=>b.onclick=async()=>{
+    if(confirm('Excluir esta categoria e todas as tarefas dentro dela?')){await api('/api/template/categories/'+b.dataset.id,{method:'DELETE'});await refreshCurrent()}
+  });
+  document.querySelectorAll('.renameTplTask').forEach(b=>b.onclick=async()=>{
+    const v=prompt('Novo nome da tarefa:',b.dataset.name); if(!v||v.trim()===b.dataset.name)return;
+    await api('/api/template/tasks/'+b.dataset.id,{method:'PATCH',body:{name:v.trim()}}); await refreshCurrent();
+  });
+  document.querySelectorAll('.delTplTask').forEach(b=>b.onclick=async()=>{
+    if(confirm('Excluir tarefa do modelo?')){await api('/api/template/tasks/'+b.dataset.id,{method:'DELETE'});await refreshCurrent()}
+  });
+}
+
+function openNewTemplateModal(){
+  showModal(`<h2>Novo modelo</h2><form id="newTemplateForm">
+    <label>Tipo do trabalho</label><input id="newTemplateType" placeholder="Ex.: Evento, Vídeo, Stand, Transmissão" required>
+    <label>Nome do modelo</label><input id="newTemplateName" placeholder="Ex.: Evento Corporativo Completo" required>
+    <div id="newTemplateError"></div>
+    <div class="actions" style="justify-content:flex-end;margin-top:18px"><button type="button" class="secondary" id="cancelTemplate">Cancelar</button><button class="primary" id="createTemplate">Criar modelo</button></div>
+  </form>`);
+  cancelTemplate.onclick=closeModal;
+  newTemplateForm.onsubmit=async e=>{
+    e.preventDefault();createTemplate.disabled=true;
+    try{
+      const t=await api('/api/templates',{method:'POST',body:{name:newTemplateName.value.trim(),type_label:newTemplateType.value.trim()}});
+      templateSummaries.push(t);
+      closeModal();await openTemplateEditor(t.id,false);
+    }catch(err){newTemplateError.innerHTML=`<div class="error">${esc(err.message)}</div>`;createTemplate.disabled=false}
+  };
+}
+
+function openEditTemplateMeta(t){
+  showModal(`<h2>Editar modelo</h2><form id="editTemplateForm">
+    <label>Tipo do trabalho</label><input id="editTemplateType" value="${esc(t.type_label||'')}" required>
+    <label>Nome do modelo</label><input id="editTemplateName" value="${esc(t.name)}" required>
+    <div id="editTemplateError"></div>
+    <div class="actions" style="justify-content:flex-end;margin-top:18px"><button type="button" class="secondary" id="cancelEditTemplate">Cancelar</button><button class="primary" id="saveTemplateMeta">Salvar</button></div>
+  </form>`);
+  cancelEditTemplate.onclick=closeModal;
+  editTemplateForm.onsubmit=async e=>{
+    e.preventDefault();saveTemplateMeta.disabled=true;
+    try{
+      const updated=await api('/api/templates/'+t.id,{method:'PATCH',body:{name:editTemplateName.value.trim(),type_label:editTemplateType.value.trim()}});
+      const ix=templateSummaries.findIndex(x=>Number(x.id)===Number(t.id));
+      if(ix>=0)templateSummaries[ix]={...templateSummaries[ix],...updated};
+      closeModal();await openTemplateEditor(t.id,false);
+    }catch(err){editTemplateError.innerHTML=`<div class="error">${esc(err.message)}</div>`;saveTemplateMeta.disabled=false}
+  };
+}
+
+function promptCreate(url,body,label,key,cb){const v=prompt(label);if(!v)return;body[key]=v.trim();api(url,{method:'POST',body}).then(cb).catch(e=>alert(e.message))}
+boot();
+</script>
+</body>
+</html>
