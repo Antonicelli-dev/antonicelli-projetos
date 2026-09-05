@@ -19,6 +19,13 @@ const app=express();
 app.use(express.json({limit:'2mb'}));
 app.use(express.static(path.join(__dirname,'public')));
 
+function validateEnvironment(){
+  if(!process.env.DATABASE_URL)
+    throw new Error('DATABASE_URL não configurada');
+  if(process.env.NODE_ENV==='production'&&(!process.env.JWT_SECRET||process.env.JWT_SECRET==='DEV-CHANGE-ME'))
+    throw new Error('JWT_SECRET não configurada para produção');
+}
+
 async function q(text,params=[]){return pool.query(text,params)}
 
 async function init(){
@@ -119,7 +126,7 @@ function validateAvatarData(value){
 }
 
 async function sendInvitationEmail(invite){
-  const base=(process.env.APP_URL||`http://localhost:${PORT}`).replace(/\/$/,'');
+  const base=(process.env.APP_URL||process.env.RENDER_EXTERNAL_URL||`http://localhost:${PORT}`).replace(/\/$/,'');
   const inviteUrl=`${base}/?invite=${encodeURIComponent(invite.token)}`;
   if(!smtpConfigured()) return {sent:false,invite_url:inviteUrl};
 
@@ -147,7 +154,7 @@ async function activeTemplate(){
   return (await q('SELECT * FROM templates WHERE active=TRUE ORDER BY id LIMIT 1')).rows[0];
 }
 async function templateWithStructure(id){
-  // V4.1.3: somente 2 consultas ao banco, independentemente do tamanho do modelo.
+  // V4.2 Render: somente 2 consultas ao banco, independentemente do tamanho do modelo.
   const t=(await q('SELECT * FROM templates WHERE id=$1 AND active=TRUE',[id])).rows[0];
   if(!t)return null;
 
@@ -1051,8 +1058,22 @@ app.delete('/api/events/:id/permanent',auth,admin,async(req,res)=>{
   res.json({ok:true});
 });
 
+app.get('/health',(req,res)=>{
+  res.set('Cache-Control','no-store');
+  res.status(200).json({ok:true,service:'antonicelli-projetos'});
+});
+
 app.get('*',(req,res)=>res.sendFile(path.join(__dirname,'public','index.html')));
 
-init()
-  .then(()=>app.listen(PORT,()=>console.log(`Antonicelli V4.1.3 rodando em http://localhost:${PORT}`)))
-  .catch(e=>{console.error('Falha ao iniciar:',e);process.exit(1)});
+try{
+  validateEnvironment();
+  init()
+    .then(()=>app.listen(PORT,'0.0.0.0',()=>{
+      const publicUrl=process.env.RENDER_EXTERNAL_URL||`http://localhost:${PORT}`;
+      console.log(`Antonicelli V4.2 Render rodando em ${publicUrl}`);
+    }))
+    .catch(e=>{console.error('Falha ao iniciar:',e);process.exit(1)});
+}catch(e){
+  console.error('Configuração inválida:',e.message);
+  process.exit(1);
+}
