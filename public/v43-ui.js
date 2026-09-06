@@ -105,7 +105,15 @@ function setupMarkdownEditor(id,initial=''){
   const raw=String(initial??'');
   editor.innerHTML=raw?(isHtmlContent(raw)?sanitizeEditorHtml(raw):renderMarkdown(raw)):'';
   const sync=()=>{const html=sanitizeEditorHtml(editor.innerHTML);hidden.value=(html==='<br>'||html==='<div><br></div>')?'':html};
-  editor.addEventListener('input',sync);editor.addEventListener('blur',()=>{editor.innerHTML=sanitizeEditorHtml(editor.innerHTML);sync()});sync();
+  editor.addEventListener('input',sync);editor.addEventListener('blur',()=>{editor.innerHTML=sanitizeEditorHtml(editor.innerHTML);sync()});
+  editor.addEventListener('click',e=>{
+    const link=e.target.closest?.('a');
+    if(!link||!editor.contains(link))return;
+    e.preventDefault();
+    const safe=mdSafeUrl(link.getAttribute('href')||'');
+    if(safe)window.open(safe,'_blank','noopener,noreferrer');
+  });
+  sync();
   const run=(action)=>{
     editor.focus();
     if(action==='bold')document.execCommand('bold',false,null);
