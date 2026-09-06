@@ -31,3 +31,17 @@ h1 .clientLogo{width:64px;height:64px}
   .filters{grid-template-columns:1fr}.detailGrid,.detailMeta{grid-template-columns:1fr}.eventSummary{grid-template-columns:1fr 1fr}.modal{padding:8px}.modalbox{padding:14px;max-width:100%}
 }
 @media(max-width:430px){.eventSummary{grid-template-columns:1fr}.userInfo>span{display:none}.workTitleSep{display:inline}.workMeta{font-size:10.5px}}
+
+/* V4.3.2 — filtro por cliente e correção do controle de direção */
+.workListControls{flex-wrap:wrap}
+.workControlGroup{display:flex;align-items:center;gap:8px;min-width:0}
+.workControlGroup label{margin:0;white-space:nowrap}
+.workControlGroup select{min-width:170px;width:auto}
+.sortDirectionBtn{margin-left:auto;white-space:nowrap}
+@media(max-width:700px){
+  .workListControls{display:grid;grid-template-columns:1fr;gap:8px}
+  .workControlGroup{display:grid;grid-template-columns:74px minmax(0,1fr);gap:8px;width:100%}
+  .workControlGroup label{width:auto;align-self:center}
+  .workControlGroup select{width:100%;min-width:0}
+  .sortDirectionBtn{width:100%!important;margin:0}
+}

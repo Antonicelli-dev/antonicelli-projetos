@@ -340,6 +340,12 @@ async function openProfileModal(){
 
 let workSortKey=sessionStorage.getItem('workSortKey')||'created_at';
 let workSortDir=sessionStorage.getItem('workSortDir')||'desc';
+let workClientFilter=sessionStorage.getItem('workClientFilter')||'';
+function filteredWorks(events){
+  if(!workClientFilter)return [...events];
+  if(workClientFilter==='__EMPTY__')return events.filter(e=>!String(e.client||'').trim());
+  return events.filter(e=>String(e.client||'').trim()===workClientFilter);
+}
 function sortedWorks(events){
   const dir=workSortDir==='asc'?1:-1;
   return [...events].sort((a,b)=>{
@@ -347,7 +353,9 @@ function sortedWorks(events){
     if(workSortKey==='client'){av=(a.client||'').trim();bv=(b.client||'').trim()}
     else if(workSortKey==='type'){av=(a.work_type||'').trim();bv=(b.work_type||'').trim()}
     else {av=a.created_at||'';bv=b.created_at||''}
-    return av.localeCompare(bv,'pt-BR',{sensitivity:'base',numeric:true})*dir || Number(b.id)-Number(a.id);
+    const primary=av.localeCompare(bv,'pt-BR',{sensitivity:'base',numeric:true})*dir;
+    if(primary)return primary;
+    return (Number(a.id)-Number(b.id))*dir;
   });
 }
 function workMeta(e){
@@ -363,17 +371,26 @@ function workTitle(e){
 }
 async function loadEvents(){
   const view=beginView('/trabalhos');userbar();const events=await api('/api/events');if(view!==viewRevision)return;
-  const ordered=sortedWorks(events);
+  const clients=[...new Set(events.map(e=>String(e.client||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR',{sensitivity:'base',numeric:true}));
+  if(workClientFilter && workClientFilter!=='__EMPTY__' && !clients.includes(workClientFilter))workClientFilter='';
+  const filtered=filteredWorks(events);
+  const ordered=sortedWorks(filtered);
+  const hasEmptyClient=events.some(e=>!String(e.client||'').trim());
   app.innerHTML=`<div class="toolbar"><div><h1 style="margin:0">Trabalhos em Andamento</h1><div class="small">Gerenciamento de projetos e tarefas</div></div>
   <div class="actions"><button class="secondary" id="calendarBtn">Calendário de Tarefas</button><button class="secondary" id="myTasksBtn">Minhas tarefas</button>
   ${me.role==='admin'?'<button class="secondary" id="archivedBtn">Arquivados</button><button class="secondary" id="trashBtn">Lixeira</button><button class="secondary" id="usersBtn">Usuários</button><button class="secondary" id="templateBtn">Editar Modelos</button><button class="primary" id="newEventBtn">+ Novo trabalho</button>':''}</div></div>
-  <div class="workListControls card"><label for="workSort">Ordenar por</label><select id="workSort"><option value="created_at">Data de criação</option><option value="client">Nome do cliente</option><option value="type">Tipo de trabalho</option></select><button class="secondary mini" id="workSortDir" title="Inverter ordem" aria-label="Inverter ordem">${workSortDir==='asc'?'↑ Crescente':'↓ Decrescente'}</button></div>
+  <div class="workListControls card"><div class="workControlGroup"><label for="workClientFilter">Cliente</label><select id="workClientFilter"><option value="">Todos os clientes</option>${clients.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')}${hasEmptyClient?'<option value="__EMPTY__">Sem cliente</option>':''}</select></div><div class="workControlGroup"><label for="workSort">Ordenar por</label><select id="workSort"><option value="created_at">Data de criação</option><option value="client">Nome do cliente</option><option value="type">Tipo de trabalho</option></select></div><button class="secondary mini sortDirectionBtn" id="workSortDirBtn" title="Inverter ordem" aria-label="Inverter ordem">${workSortDir==='asc'?'↑ Crescente':'↓ Decrescente'}</button></div>
   <div class="workList">${ordered.map(e=>`<div class="card event workRow" data-event-id="${e.id}"><div class="workIdentity">${clientLogo(e)}<div class="workText"><div class="workTitle">${workTitle(e)}</div><div class="workMeta">${workMeta(e)}</div></div></div>
   <div class="workProgress"><div class="small">${e.progress}% concluído</div><div class="progress"><div class="bar" style="width:${e.progress}%"></div></div></div>
   ${me.role==='admin'?`<div class="listActions"><button class="secondary mini iconBtn archiveEvt" data-id="${e.id}" data-name="${esc(e.name)}" title="Arquivar trabalho" aria-label="Arquivar trabalho">▣</button><button class="danger mini iconBtn delEvt" data-id="${e.id}" data-name="${esc(e.name)}" title="Mover para a lixeira" aria-label="Mover para a lixeira">🗑</button></div>`:''}</div>`).join('')||'<div class="card emptyState">Nenhum trabalho em andamento.</div>'}</div>`;
-  workSort.value=workSortKey;
-  workSort.onchange=()=>{workSortKey=workSort.value;sessionStorage.setItem('workSortKey',workSortKey);loadEvents()};
-  workSortDir.onclick=()=>{workSortDir=workSortDir==='asc'?'desc':'asc';sessionStorage.setItem('workSortDir',workSortDir);loadEvents()};
+  const workSortEl=document.getElementById('workSort');
+  const workSortDirBtn=document.getElementById('workSortDirBtn');
+  const workClientFilterEl=document.getElementById('workClientFilter');
+  workSortEl.value=workSortKey;
+  workClientFilterEl.value=workClientFilter;
+  workSortEl.onchange=()=>{workSortKey=workSortEl.value;sessionStorage.setItem('workSortKey',workSortKey);loadEvents()};
+  workSortDirBtn.onclick=()=>{workSortDir=workSortDir==='asc'?'desc':'asc';sessionStorage.setItem('workSortDir',workSortDir);loadEvents()};
+  workClientFilterEl.onchange=()=>{workClientFilter=workClientFilterEl.value;sessionStorage.setItem('workClientFilter',workClientFilter);loadEvents()};
   calendarBtn.onclick=openCalendar;
   myTasksBtn.onclick=openMyTasks;
   if(me.role==='admin'){
