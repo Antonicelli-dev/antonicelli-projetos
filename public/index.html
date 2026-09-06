@@ -7,7 +7,7 @@
 *{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f5f6f8;color:#20242b}
 header{height:64px;background:#17191d;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 24px}
 .logo{display:flex;align-items:center}
-.logo img{height:34px;width:auto;display:block}
+.logo img{height:26px;width:auto;display:block}
 .noteIcon{display:inline-flex;align-items:center;justify-content:center;margin-left:7px;font-size:14px;vertical-align:middle;opacity:.75}
 .noteIcon[title]{cursor:help}
 .userInfo{display:flex;align-items:center;gap:8px}
@@ -338,40 +338,52 @@ async function openProfileModal(){
   };
 }
 
+let workSortKey=sessionStorage.getItem('workSortKey')||'created_at';
+let workSortDir=sessionStorage.getItem('workSortDir')||'desc';
+function sortedWorks(events){
+  const dir=workSortDir==='asc'?1:-1;
+  return [...events].sort((a,b)=>{
+    let av,bv;
+    if(workSortKey==='client'){av=(a.client||'').trim();bv=(b.client||'').trim()}
+    else if(workSortKey==='type'){av=(a.work_type||'').trim();bv=(b.work_type||'').trim()}
+    else {av=a.created_at||'';bv=b.created_at||''}
+    return av.localeCompare(bv,'pt-BR',{sensitivity:'base',numeric:true})*dir || Number(b.id)-Number(a.id);
+  });
+}
+function workMeta(e){
+  const parts=[];
+  if(e.work_type)parts.push(`<span class="workTypeBadge">${esc(e.work_type)}</span>`);
+  if(e.place)parts.push(`<span>${esc(e.place)}</span>`);
+  const d=workListDate(e);if(d)parts.push(`<span>${esc(d)}</span>`);
+  return parts.join('<span class="metaSep">·</span>');
+}
+function workTitle(e){
+  const client=String(e.client||'').trim(),name=String(e.name||'').trim();
+  return client?`<b>${esc(client)}</b><span class="workTitleSep"> | </span><b class="workName">${esc(name)}</b>`:`<b class="workName">${esc(name)}</b>`;
+}
 async function loadEvents(){
   const view=beginView('/trabalhos');userbar();const events=await api('/api/events');if(view!==viewRevision)return;
+  const ordered=sortedWorks(events);
   app.innerHTML=`<div class="toolbar"><div><h1 style="margin:0">Trabalhos em Andamento</h1><div class="small">Gerenciamento de projetos e tarefas</div></div>
   <div class="actions"><button class="secondary" id="calendarBtn">Calendário de Tarefas</button><button class="secondary" id="myTasksBtn">Minhas tarefas</button>
   ${me.role==='admin'?'<button class="secondary" id="archivedBtn">Arquivados</button><button class="secondary" id="trashBtn">Lixeira</button><button class="secondary" id="usersBtn">Usuários</button><button class="secondary" id="templateBtn">Editar Modelos</button><button class="primary" id="newEventBtn">+ Novo trabalho</button>':''}</div></div>
-  ${events.map(e=>`<div class="card event" data-event-id="${e.id}"><div><div><span class="workTypeBadge">${esc(e.work_type||'Trabalho')}</span>${clientLogo(e)}<b>${esc(e.name)}</b></div><div class="small" style="margin-top:6px">${[e.client,e.place,workListDate(e)].filter(Boolean).map(esc).join(' · ')||'Sem informações adicionais'}</div></div>
-  <div><div class="small">${e.progress}% concluído</div><div class="progress"><div class="bar" style="width:${e.progress}%"></div></div></div>
-  ${me.role==='admin'?`<div class="listActions"><button class="secondary archiveEvt" data-id="${e.id}" data-name="${esc(e.name)}">Arquivar</button><button class="danger delEvt" data-id="${e.id}" data-name="${esc(e.name)}">Excluir</button></div>`:''}</div>`).join('')||'<div class="card emptyState">Nenhum trabalho em andamento.</div>'}`;
+  <div class="workListControls card"><label for="workSort">Ordenar por</label><select id="workSort"><option value="created_at">Data de criação</option><option value="client">Nome do cliente</option><option value="type">Tipo de trabalho</option></select><button class="secondary mini" id="workSortDir" title="Inverter ordem" aria-label="Inverter ordem">${workSortDir==='asc'?'↑ Crescente':'↓ Decrescente'}</button></div>
+  <div class="workList">${ordered.map(e=>`<div class="card event workRow" data-event-id="${e.id}"><div class="workIdentity">${clientLogo(e)}<div class="workText"><div class="workTitle">${workTitle(e)}</div><div class="workMeta">${workMeta(e)}</div></div></div>
+  <div class="workProgress"><div class="small">${e.progress}% concluído</div><div class="progress"><div class="bar" style="width:${e.progress}%"></div></div></div>
+  ${me.role==='admin'?`<div class="listActions"><button class="secondary mini iconBtn archiveEvt" data-id="${e.id}" data-name="${esc(e.name)}" title="Arquivar trabalho" aria-label="Arquivar trabalho">▣</button><button class="danger mini iconBtn delEvt" data-id="${e.id}" data-name="${esc(e.name)}" title="Mover para a lixeira" aria-label="Mover para a lixeira">🗑</button></div>`:''}</div>`).join('')||'<div class="card emptyState">Nenhum trabalho em andamento.</div>'}</div>`;
+  workSort.value=workSortKey;
+  workSort.onchange=()=>{workSortKey=workSort.value;sessionStorage.setItem('workSortKey',workSortKey);loadEvents()};
+  workSortDir.onclick=()=>{workSortDir=workSortDir==='asc'?'desc':'asc';sessionStorage.setItem('workSortDir',workSortDir);loadEvents()};
   calendarBtn.onclick=openCalendar;
   myTasksBtn.onclick=openMyTasks;
   if(me.role==='admin'){
-    usersBtn.onclick=openUsers;
-    archivedBtn.onclick=openArchivedEvents;
-    trashBtn.onclick=openTrash;
-    templateBtn.onclick=()=>{templateSummaries=[];openTemplateEditor()};
-    newEventBtn.onclick=openNewEventModal;
+    usersBtn.onclick=openUsers;archivedBtn.onclick=openArchivedEvents;trashBtn.onclick=openTrash;
+    templateBtn.onclick=()=>{templateSummaries=[];openTemplateEditor()};newEventBtn.onclick=openNewEventModal;
   }
   document.querySelectorAll('.event').forEach(x=>x.onclick=()=>openEvent(Number(x.dataset.eventId)));
-  document.querySelectorAll('.archiveEvt').forEach(b=>b.onclick=async e=>{
-    e.stopPropagation();
-    if(confirm(`Arquivar o trabalho "${b.dataset.name}"?\n\nEle sairá da lista de Trabalhos em Andamento e ficará disponível em Arquivados.`)){
-      await api('/api/events/'+b.dataset.id+'/archive',{method:'PATCH'});
-      loadEvents();
-    }
-  });
-  document.querySelectorAll('.delEvt').forEach(b=>b.onclick=async e=>{
-    e.stopPropagation();
-    if(confirm(`Mover o trabalho "${b.dataset.name}" para a Lixeira?\n\nEle poderá ser restaurado depois.`)){
-      await api('/api/events/'+b.dataset.id,{method:'DELETE'});
-      loadEvents();
-    }
-  });
+  document.querySelectorAll('.archiveEvt').forEach(b=>b.onclick=async e=>{e.stopPropagation();if(confirm(`Arquivar o trabalho "${b.dataset.name}"?\n\nEle sairá da lista de Trabalhos em Andamento e ficará disponível em Arquivados.`)){await api('/api/events/'+b.dataset.id+'/archive',{method:'PATCH'});loadEvents()}});
+  document.querySelectorAll('.delEvt').forEach(b=>b.onclick=async e=>{e.stopPropagation();if(confirm(`Mover o trabalho "${b.dataset.name}" para a Lixeira?\n\nEle poderá ser restaurado depois.`)){await api('/api/events/'+b.dataset.id,{method:'DELETE'});loadEvents()}});
 }
-
 let calendarMonthCursor=null,calendarTaskCache=[];
 
 function dateParts(value){
@@ -1064,7 +1076,6 @@ async function openEvent(id,loaded=null){
 
   
 
-  ${currentEvent.additional_info_html||currentEvent.additional_info?`<div class="card richDisplay">${eventRich(currentEvent)}</div>`:''}
   <div class="filters card">
     <select id="filterStatus"><option value="">Todos os status</option>${['Não Iniciada','Em Andamento','Concluída','Atrasada'].map(x=>`<option>${x}</option>`).join('')}</select>
     <select id="filterResp"><option value="">Todos os responsáveis</option><option value="none">Sem responsável</option>${currentEvent.members.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('')}</select>
