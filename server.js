@@ -154,7 +154,7 @@ async function activeTemplate(){
   return (await q('SELECT * FROM templates WHERE active=TRUE ORDER BY id LIMIT 1')).rows[0];
 }
 async function templateWithStructure(id){
-  // V4.2 Render: somente 2 consultas ao banco, independentemente do tamanho do modelo.
+  // V4.2.1 Render: somente 2 consultas ao banco, independentemente do tamanho do modelo.
   const t=(await q('SELECT * FROM templates WHERE id=$1 AND active=TRUE',[id])).rows[0];
   if(!t)return null;
 
@@ -288,9 +288,9 @@ app.post('/api/events/:id/invitations',auth,admin,async(req,res)=>{
   const existing=(await q('SELECT id,active FROM users WHERE LOWER(email)=LOWER($1)',[email])).rows[0];
   if(existing&&existing.active)
     return res.status(409).json({error:'Este e-mail já está cadastrado. Use a opção de adicionar colaborador existente.'});
-  if(existing&&!existing.active)
-    return res.status(409).json({error:'Existe uma conta desativada com este e-mail.'});
 
+  // Contas desativadas podem receber novo convite. O cadastro reativa a mesma conta,
+  // preservando o histórico e os vínculos de auditoria existentes.
   await q(`UPDATE invitations SET expires_at=NOW()
            WHERE LOWER(email)=LOWER($1) AND accepted_at IS NULL AND expires_at>NOW()`,[email]);
 
@@ -313,9 +313,8 @@ app.post('/api/events/:id/invitations',auth,admin,async(req,res)=>{
 app.get('/api/invitations/:token',async(req,res)=>{
   const token=String(req.params.token||'');
   const inv=(await q(
-    `SELECT i.id,i.email,i.name,i.role,i.expires_at,i.accepted_at,e.name event_name
+    `SELECT i.id,i.email,i.name,i.role,i.expires_at,i.accepted_at
      FROM invitations i
-     LEFT JOIN events e ON e.id=i.event_id
      WHERE i.token=$1`,
     [token]
   )).rows[0];
@@ -348,15 +347,36 @@ app.post('/api/register-invite',async(req,res)=>{
     )).rows[0];
     if(!inv)throw new Error('Convite inválido ou expirado');
 
-    const exists=(await db.query('SELECT id FROM users WHERE LOWER(email)=LOWER($1)',[inv.email])).rows[0];
-    if(exists)throw new Error('Já existe uma conta com este e-mail');
+    const existingUser=(await db.query(
+      'SELECT id,active,avatar_data FROM users WHERE LOWER(email)=LOWER($1) FOR UPDATE',
+      [inv.email]
+    )).rows[0];
+
+    if(existingUser?.active)
+      throw new Error('Já existe uma conta ativa com este e-mail');
 
     const hash=bcrypt.hashSync(password,10);
-    const user=(await db.query(
-      `INSERT INTO users(name,email,password_hash,role,active,avatar_data)
-       VALUES($1,$2,$3,$4,TRUE,$5) RETURNING id,name,email,role,avatar_data`,
-      [name,inv.email,hash,inv.role,avatar_data]
-    )).rows[0];
+    let user;
+
+    if(existingUser){
+      // Reativa a conta original para preservar histórico/auditoria.
+      // Se nenhuma foto nova for enviada, mantém a foto que já estava salva.
+      const reactivatedAvatar=avatar_data||existingUser.avatar_data||'';
+      user=(await db.query(
+        `UPDATE users
+         SET name=$1,password_hash=$2,role=$3,active=TRUE,avatar_data=$4
+         WHERE id=$5
+         RETURNING id,name,email,role,avatar_data`,
+        [name,hash,inv.role,reactivatedAvatar,existingUser.id]
+      )).rows[0];
+    }else{
+      user=(await db.query(
+        `INSERT INTO users(name,email,password_hash,role,active,avatar_data)
+         VALUES($1,$2,$3,$4,TRUE,$5)
+         RETURNING id,name,email,role,avatar_data`,
+        [name,inv.email,hash,inv.role,avatar_data]
+      )).rows[0];
+    }
 
     if(inv.event_id){
       await db.query(
@@ -1070,7 +1090,7 @@ try{
   init()
     .then(()=>app.listen(PORT,'0.0.0.0',()=>{
       const publicUrl=process.env.RENDER_EXTERNAL_URL||`http://localhost:${PORT}`;
-      console.log(`Antonicelli V4.2 Render rodando em ${publicUrl}`);
+      console.log(`Antonicelli V4.2.1 Render rodando em ${publicUrl}`);
     }))
     .catch(e=>{console.error('Falha ao iniciar:',e);process.exit(1)});
 }catch(e){

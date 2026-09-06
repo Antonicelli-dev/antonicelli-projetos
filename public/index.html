@@ -167,7 +167,6 @@ async function showInviteRegistration(inviteToken){
       <div class="small">Convite para acessar a plataforma Antonicelli Eventos</div>
       <div class="note" style="margin-top:15px">
         Nível de acesso: <b>${esc(roleLabel(inv.role))}</b>
-        ${inv.event_name?`<br>Evento: <b>${esc(inv.event_name)}</b>`:''}
       </div>
       <form id="inviteRegisterForm">
         <label>Nome</label>
