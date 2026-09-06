@@ -376,9 +376,20 @@ async function loadEvents(){
   const filtered=filteredWorks(events);
   const ordered=sortedWorks(filtered);
   const hasEmptyClient=events.some(e=>!String(e.client||'').trim());
-  app.innerHTML=`<div class="toolbar"><div><h1 style="margin:0">Trabalhos em Andamento</h1><div class="small">Gerenciamento de projetos e tarefas</div></div>
-  <div class="actions"><button class="secondary" id="calendarBtn">Calendário de Tarefas</button><button class="secondary" id="myTasksBtn">Minhas tarefas</button>
-  ${me.role==='admin'?'<button class="secondary" id="archivedBtn">Arquivados</button><button class="secondary" id="trashBtn">Lixeira</button><button class="secondary" id="usersBtn">Usuários</button><button class="secondary" id="templateBtn">Editar Modelos</button><button class="primary" id="newEventBtn">+ Novo trabalho</button>':''}</div></div>
+  app.innerHTML=`<div class="toolbar dashboardToolbar"><div class="dashboardHeading"><h1 style="margin:0">Trabalhos em Andamento</h1><div class="small">Gerenciamento de projetos e tarefas</div></div>
+  <div class="actions dashboardActions">
+    ${me.role==='admin'?'<button class="primary newWorkBtn" id="newEventBtn">+ <span>Novo trabalho</span></button>':''}
+    <button class="secondary topNavBtn" id="calendarBtn" title="Calendário de tarefas" aria-label="Calendário de tarefas"><span class="topNavIcon" aria-hidden="true">▦</span><span class="actionLabel">Calendário</span></button>
+    <button class="secondary topNavBtn" id="myTasksBtn" title="Minhas tarefas" aria-label="Minhas tarefas"><span class="topNavIcon" aria-hidden="true">✓</span><span class="actionLabel">Minhas tarefas</span></button>
+    <div class="moreMenu ${me.role==='admin'?'':'moreMenuUser'}">
+      <button class="secondary moreMenuBtn" id="moreMenuBtn" type="button" aria-haspopup="true" aria-expanded="false" title="Mais opções"><span aria-hidden="true">⋯</span><span class="moreMenuLabel">Mais</span></button>
+      <div class="moreMenuDropdown" id="moreMenuDropdown" role="menu">
+        <button class="menuItem compactNavItem" id="calendarMenuBtn" role="menuitem"><span aria-hidden="true">▦</span> Calendário</button>
+        <button class="menuItem compactNavItem" id="myTasksMenuBtn" role="menuitem"><span aria-hidden="true">✓</span> Minhas tarefas</button>
+        ${me.role==='admin'?'<button class="menuItem" id="templateBtn" role="menuitem"><span aria-hidden="true">≡</span> Modelos</button><button class="menuItem" id="usersBtn" role="menuitem"><span aria-hidden="true">●</span> Usuários</button><div class="menuDivider"></div><button class="menuItem" id="archivedBtn" role="menuitem"><span aria-hidden="true">□</span> Arquivados</button><button class="menuItem menuDanger" id="trashBtn" role="menuitem"><span aria-hidden="true">♲</span> Lixeira</button>':''}
+      </div>
+    </div>
+  </div></div>
   <div class="workListControls card"><div class="workControlGroup"><label for="workClientFilter">Cliente</label><select id="workClientFilter"><option value="">Todos os clientes</option>${clients.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')}${hasEmptyClient?'<option value="__EMPTY__">Sem cliente</option>':''}</select></div><div class="workControlGroup"><label for="workSort">Ordenar por</label><select id="workSort"><option value="created_at">Data de criação</option><option value="client">Nome do cliente</option><option value="type">Tipo de trabalho</option></select></div><button class="secondary mini sortDirectionBtn" id="workSortDirBtn" title="Inverter ordem" aria-label="Inverter ordem">${workSortDir==='asc'?'↑ Crescente':'↓ Decrescente'}</button></div>
   <div class="workList">${ordered.map(e=>`<div class="card event workRow" data-event-id="${e.id}"><div class="workIdentity">${clientLogo(e)}<div class="workText"><div class="workTitle">${workTitle(e)}</div><div class="workMeta">${workMeta(e)}</div></div></div>
   <div class="workProgress"><div class="small">${e.progress}% concluído</div><div class="progress"><div class="bar" style="width:${e.progress}%"></div></div></div>
@@ -393,9 +404,17 @@ async function loadEvents(){
   workClientFilterEl.onchange=()=>{workClientFilter=workClientFilterEl.value;sessionStorage.setItem('workClientFilter',workClientFilter);loadEvents()};
   calendarBtn.onclick=openCalendar;
   myTasksBtn.onclick=openMyTasks;
+  const moreMenuBtn=document.getElementById('moreMenuBtn');
+  const moreMenuDropdown=document.getElementById('moreMenuDropdown');
+  const closeMoreMenu=()=>{moreMenuDropdown.classList.remove('open');moreMenuBtn.setAttribute('aria-expanded','false')};
+  moreMenuBtn.onclick=(ev)=>{ev.stopPropagation();const opening=!moreMenuDropdown.classList.contains('open');closeMoreMenu();if(opening){moreMenuDropdown.classList.add('open');moreMenuBtn.setAttribute('aria-expanded','true');setTimeout(()=>document.addEventListener('click',closeMoreMenu,{once:true}),0)}};
+  document.getElementById('calendarMenuBtn').onclick=()=>{closeMoreMenu();openCalendar()};
+  document.getElementById('myTasksMenuBtn').onclick=()=>{closeMoreMenu();openMyTasks()};
+  moreMenuDropdown.onclick=ev=>ev.stopPropagation();
+  moreMenuDropdown.onkeydown=ev=>{if(ev.key==='Escape'){closeMoreMenu();moreMenuBtn.focus()}};
   if(me.role==='admin'){
-    usersBtn.onclick=openUsers;archivedBtn.onclick=openArchivedEvents;trashBtn.onclick=openTrash;
-    templateBtn.onclick=()=>{templateSummaries=[];openTemplateEditor()};newEventBtn.onclick=openNewEventModal;
+    usersBtn.onclick=()=>{closeMoreMenu();openUsers()};archivedBtn.onclick=()=>{closeMoreMenu();openArchivedEvents()};trashBtn.onclick=()=>{closeMoreMenu();openTrash()};
+    templateBtn.onclick=()=>{closeMoreMenu();templateSummaries=[];openTemplateEditor()};newEventBtn.onclick=openNewEventModal;
   }
   document.querySelectorAll('.event').forEach(x=>x.onclick=()=>openEvent(Number(x.dataset.eventId)));
   document.querySelectorAll('.archiveEvt').forEach(b=>b.onclick=async e=>{e.stopPropagation();if(confirm(`Arquivar o trabalho "${b.dataset.name}"?\n\nEle sairá da lista de Trabalhos em Andamento e ficará disponível em Arquivados.`)){await api('/api/events/'+b.dataset.id+'/archive',{method:'PATCH'});loadEvents()}});

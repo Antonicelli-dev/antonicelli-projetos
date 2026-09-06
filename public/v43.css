@@ -66,3 +66,52 @@ h1 .clientLogo{width:64px;height:64px}
 .noteTooltip.markdownDisplay h1,.noteTooltip.markdownDisplay h2,.noteTooltip.markdownDisplay h3,.noteTooltip.markdownDisplay h4,.noteTooltip.markdownDisplay h5,.noteTooltip.markdownDisplay h6{font-size:14px;margin:7px 0 4px}
 .noteTooltip.markdownDisplay p{margin:0 0 6px}.noteTooltip.markdownDisplay ul,.noteTooltip.markdownDisplay ol{margin:4px 0 7px;padding-left:19px}
 @media(max-width:700px){.markdownToolbar button{min-width:40px;height:38px}.markdownEditor{min-height:170px;font-size:16px}}
+
+
+/* V4.3.6 — navegação superior compacta e responsiva */
+.dashboardToolbar{align-items:flex-start;gap:18px}
+.dashboardHeading{min-width:0;flex:1 1 auto}
+.dashboardHeading h1{overflow-wrap:anywhere}
+.dashboardActions{flex:0 0 auto;align-items:center;justify-content:flex-end;flex-wrap:nowrap;position:relative}
+.topNavBtn,.moreMenuBtn,.newWorkBtn{height:38px;display:inline-flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap}
+.topNavIcon{font-size:17px;line-height:1;font-weight:400}
+.moreMenu{position:relative;flex:0 0 auto}
+.moreMenuBtn{min-width:72px;padding-left:11px;padding-right:11px}
+.moreMenuBtn>span:first-child{font-size:20px;line-height:12px;transform:translateY(-2px)}
+.moreMenuDropdown{display:none;position:absolute;right:0;top:calc(100% + 7px);z-index:30;min-width:190px;padding:6px;background:#fff;border:1px solid #dfe3e8;border-radius:10px;box-shadow:0 10px 30px rgba(24,32,44,.16)}
+.moreMenuDropdown.open{display:block}
+.menuItem{width:100%;display:flex;align-items:center;gap:9px;text-align:left;padding:9px 10px;border-radius:7px;background:transparent;color:#20242b;font-size:13px;font-weight:600}
+.menuItem:hover,.menuItem:focus{background:#f1f3f5;outline:none}
+.menuItem>span{width:18px;text-align:center;color:#646b74;font-weight:400}
+.menuDivider{height:1px;background:#e5e7eb;margin:5px 4px}
+.menuDanger{color:#8b1e1e}.menuDanger>span{color:#8b1e1e}
+.compactNavItem{display:none}
+
+@media(max-width:1050px) and (min-width:701px){
+  .dashboardToolbar{flex-direction:row;align-items:flex-start}
+  .dashboardActions{width:auto}
+  .topNavBtn{width:40px;padding:0}
+  .topNavBtn .actionLabel{display:none}
+  .moreMenuBtn{min-width:40px;width:40px;padding:0}
+  .moreMenuLabel{display:none}
+  .newWorkBtn{padding-left:11px;padding-right:11px}
+}
+@media(min-width:1051px){.moreMenuUser{display:none}}
+@media(max-width:700px){
+  .dashboardToolbar{flex-direction:row!important;align-items:flex-start!important;gap:10px}
+  .dashboardHeading{flex:1 1 auto;min-width:0}
+  .dashboardHeading h1{font-size:21px;line-height:1.12}
+  .dashboardActions{width:auto!important;flex:0 0 auto;gap:6px}
+  .topNavBtn{display:none}
+  .compactNavItem{display:flex}
+  .moreMenuBtn{min-width:40px;width:40px;height:38px;padding:0}
+  .moreMenuLabel{display:none}
+  .newWorkBtn{height:38px;padding:0 10px}
+  .newWorkBtn span{display:none}
+  .moreMenuDropdown{position:absolute;right:0;min-width:200px}
+}
+@media(max-width:420px){
+  .dashboardToolbar{gap:7px}
+  .dashboardHeading .small{font-size:11px}
+  .newWorkBtn{width:38px;padding:0;font-size:18px}
+}
