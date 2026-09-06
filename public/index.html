@@ -662,11 +662,11 @@ async function openNewEventModal(){
   <div class="detailGrid"><div><label>Data de início <span class="small">(opcional)</span></label><input id="eventDate" type="date"></div><div><label>Data de término</label><input id="eventEndDate" type="date"></div></div>
   <label>Local</label><input id="eventPlace">
   <label>Número de participantes</label><input id="eventParticipants" type="number" min="0" step="1">
-  <label>Informações adicionais</label>${richEditorMarkup("eventAdditionalInfo")}
+  <label>Informações adicionais</label>${markdownEditorMarkup("eventAdditionalInfo",{placeholder:"Use Markdown para títulos, listas, links e destaques..."})}
   ${logoPickerMarkup()}
   <div id="eventError"></div>
   <div class="actions" style="justify-content:flex-end;margin-top:18px"><button type="button" class="secondary" id="cancelEventBtn">Cancelar</button><button class="primary" id="createEventBtn">Criar trabalho</button></div></form>`);
-  setupRichEditor('eventAdditionalInfo',{});
+  setupMarkdownEditor('eventAdditionalInfo','');
   const getLogo=setupLogoPicker();
   cancelEventBtn.onclick=closeModal;
   newEventForm.onsubmit=async e=>{
@@ -680,7 +680,7 @@ async function openNewEventModal(){
         end_date:eventEndDate.value||null,
         place:eventPlace.value.trim(),
         participants:eventParticipants.value===''?null:Number(eventParticipants.value),
-        additional_info_html:cleanRich(eventAdditionalInfo.innerHTML),client_logo_data:await getLogo()
+        additional_info:eventAdditionalInfo.value,client_logo_data:await getLogo()
       }});
       closeModal();openEvent(r.id)
     }catch(err){eventError.innerHTML=`<div class="error">${esc(err.message)}</div>`;createEventBtn.disabled=false}
@@ -834,11 +834,12 @@ function openTaskDetails(task){
     </div>
 
     <label>Anotações</label>
-    <textarea id="taskNotes" placeholder="Informações, pendências, contatos, decisões, links e demais detalhes da tarefa..." ${canEdit?'':'disabled'}>${esc(task.notes||'')}</textarea>
+    ${markdownEditorMarkup("taskNotes",{disabled:!canEdit,placeholder:"Use Markdown para títulos, listas, links e destaques..."})}
     <div id="taskDetailError"></div>
     <div class="actions" style="justify-content:flex-end;margin-top:18px">${canEdit||canStructure?'<button class="primary" id="saveTaskDetails">Salvar alterações</button>':''}</div>
   </form>`);
 
+  setupMarkdownEditor('taskNotes',task.notes||'');
   document.getElementById('closeTaskDetails').onclick=closeModal;
   const statusEl=document.getElementById('taskDetailStatus');
   if(statusEl)statusEl.onchange=()=>{statusEl.className='statusSelect '+statusClass(statusEl.value)};
@@ -1022,7 +1023,7 @@ function openEventDetailsModal(){
     <input id="detailParticipants" type="number" min="0" step="1" value="${currentEvent.participants??''}">
 
     <label>Informações adicionais</label>
-    ${richEditorMarkup("detailAdditionalInfo")}
+    ${markdownEditorMarkup("detailAdditionalInfo",{placeholder:"Use Markdown para títulos, listas, links e destaques..."})}
     ${logoPickerMarkup()}
 
     <div id="eventDetailsError"></div>
@@ -1031,7 +1032,7 @@ function openEventDetailsModal(){
     </div>
   </form>`);
 
-  setupRichEditor('detailAdditionalInfo',currentEvent);
+  setupMarkdownEditor('detailAdditionalInfo',eventMarkdown(currentEvent));
   const getLogo=setupLogoPicker(currentEvent.client_logo_data);
   document.getElementById('closeEventDetails').onclick=closeModal;
   document.getElementById('eventDetailsForm').onsubmit=async e=>{
@@ -1049,7 +1050,7 @@ function openEventDetailsModal(){
           end_date:document.getElementById('detailEndDate').value||null,
           place:document.getElementById('detailPlace').value.trim(),
           participants:document.getElementById('detailParticipants').value===''?null:Number(document.getElementById('detailParticipants').value),
-          additional_info_html:cleanRich(document.getElementById('detailAdditionalInfo').innerHTML),
+          additional_info:document.getElementById('detailAdditionalInfo').value,
           client_logo_data:await getLogo()
         }
       });
@@ -1113,7 +1114,7 @@ async function openEvent(id,loaded=null){
         ${tasks.map(t=>`<div class="task" data-task-id="${t.id}" data-status="${esc(t.status)}" data-resp="${responsibleIds(t).join(',')||'none'}" data-phase="${esc(t.phase_name)}">
           <div style="display:flex;align-items:flex-start;gap:8px">
             ${me.role==='admin'?'<span class="dragHandle" title="Arrastar tarefa">⋮⋮</span>':''}
-            <div><span class="taskName">${esc(t.name)}</span>${String(t.notes||'').trim()?`<span class="noteIcon" tabindex="0" aria-label="Anotações">📝<span role="tooltip" class="noteTooltip">${esc(t.notes)}</span></span>`:''}${(t.start_date||t.end_date)?`<div class="small">${t.start_date?'Início: '+formatDateBR(t.start_date):''}${t.start_date&&t.end_date?' · ':''}${t.end_date?'Fim: '+formatDateBR(t.end_date):''}</div>`:''}</div>
+            <div><span class="taskName">${esc(t.name)}</span>${String(t.notes||'').trim()?`<span class="noteIcon" tabindex="0" aria-label="Anotações">📝<span role="tooltip" class="noteTooltip markdownDisplay">${renderMarkdown(t.notes)}</span></span>`:''}${(t.start_date||t.end_date)?`<div class="small">${t.start_date?'Início: '+formatDateBR(t.start_date):''}${t.start_date&&t.end_date?' · ':''}${t.end_date?'Fim: '+formatDateBR(t.end_date):''}</div>`:''}</div>
           </div>
           <select class="taskStatus statusSelect ${statusClass(t.status)}" data-id="${t.id}" ${me.role==='guest'?'disabled':''}>${statusOptions(t.status)}</select>
           ${(t.responsibles||[]).length

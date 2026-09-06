@@ -1,6 +1,6 @@
 {
-  "name": "antonicelli-eventos-v4-3-render",
-  "version": "4.3.0",
+  "name": "antonicelli-eventos-v4-3-3-render",
+  "version": "4.3.3",
   "private": true,
   "scripts": {
     "start": "node --env-file-if-exists=.env server.js",

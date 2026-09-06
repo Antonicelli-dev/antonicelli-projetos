@@ -37,20 +37,83 @@ function positionNoteTooltip(event){
 }
 document.addEventListener('mouseover',positionNoteTooltip);
 document.addEventListener('focusin',positionNoteTooltip);
-function cleanRich(html){return DOMPurify.sanitize(html||'',{ALLOWED_TAGS:['p','br','div','strong','b','em','i','u','ul','ol','li'],ALLOWED_ATTR:[]})}
-function eventRich(event){return event.additional_info_html!=null?cleanRich(event.additional_info_html):esc(event.additional_info||'').replace(/\n/g,'<br>')}
-function richEditorMarkup(id){
-  return `<div class="richToolbar" data-editor="${id}" role="toolbar" aria-label="Formatação">${[['bold','Negrito'],['italic','Itálico'],['underline','Sublinhado'],['insertUnorderedList','Lista'],['insertOrderedList','Lista numerada'],['removeFormat','Limpar formato']].map(([cmd,label])=>`<button type="button" class="secondary mini" data-command="${cmd}">${label}</button>`).join('')}</div><div id="${id}" class="richEditor" contenteditable="true" role="textbox" aria-label="Informações adicionais" aria-multiline="true"></div>`;
+function mdEscape(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function mdSafeUrl(value){
+  const url=String(value||'').trim();
+  return /^(https?:\/\/|mailto:)/i.test(url)?url:'';
 }
-function setupRichEditor(id,event){
-  const el=document.getElementById(id);el.innerHTML=eventRich(event);
-  document.querySelectorAll(`[data-editor="${id}"] button`).forEach(b=>{
-    b.onmousedown=e=>e.preventDefault();
-    b.onclick=()=>{el.focus();document.execCommand(b.dataset.command,false,null)};
+function markdownInline(value){
+  const links=[];
+  let text=String(value??'').replace(/\[([^\]\n]+)\]\(([^)\s]+)\)/g,(m,label,url)=>{
+    const safe=mdSafeUrl(url);if(!safe)return m;
+    const key=`\u0000MDLINK${links.length}\u0000`;
+    links.push(`<a href="${mdEscape(safe)}" target="_blank" rel="noopener noreferrer">${mdEscape(label)}</a>`);
+    return key;
   });
-  // Paste only text; keep foreign markup and remote images out of the editor.
-  el.onpaste=e=>{e.preventDefault();document.execCommand('insertText',false,e.clipboardData.getData('text/plain'))};
-  el.ondrop=e=>e.preventDefault();
+  text=mdEscape(text)
+    .replace(/\*\*([^*\n]+)\*\*/g,'<strong>$1</strong>')
+    .replace(/__([^_\n]+)__/g,'<strong>$1</strong>')
+    .replace(/(^|[^*])\*([^*\n]+)\*/g,'$1<em>$2</em>')
+    .replace(/(^|[^_])_([^_\n]+)_/g,'$1<em>$2</em>');
+  links.forEach((html,i)=>{text=text.replace(`\u0000MDLINK${i}\u0000`,html)});
+  return text;
+}
+function renderMarkdown(markdown){
+  const lines=String(markdown??'').replace(/\r\n?/g,'\n').split('\n');
+  let out='',list=null,paragraph=[];
+  const flushParagraph=()=>{if(paragraph.length){out+=`<p>${paragraph.map(markdownInline).join('<br>')}</p>`;paragraph=[]}};
+  const closeList=()=>{if(list){out+=`</${list}>`;list=null}};
+  for(const line of lines){
+    const heading=line.match(/^(#{1,6})\s+(.+)$/);
+    const unordered=line.match(/^\s*[-+*]\s+(.+)$/);
+    const ordered=line.match(/^\s*\d+[.)]\s+(.+)$/);
+    if(heading){flushParagraph();closeList();const level=heading[1].length;out+=`<h${level}>${markdownInline(heading[2])}</h${level}>`;continue}
+    if(unordered||ordered){
+      flushParagraph();const wanted=unordered?'ul':'ol';if(list!==wanted){closeList();list=wanted;out+=`<${list}>`}
+      out+=`<li>${markdownInline((unordered||ordered)[1])}</li>`;continue;
+    }
+    if(!line.trim()){flushParagraph();closeList();continue}
+    closeList();paragraph.push(line);
+  }
+  flushParagraph();closeList();
+  return DOMPurify.sanitize(out,{ALLOWED_TAGS:['p','br','strong','em','h1','h2','h3','h4','h5','h6','ul','ol','li','a'],ALLOWED_ATTR:['href','target','rel']});
+}
+function eventMarkdown(event){return String(event?.additional_info||'')}
+function markdownToolbarMarkup(id,disabled=false){
+  const off=disabled?' disabled':'';
+  return `<div class="markdownToolbar" data-editor="${id}" role="toolbar" aria-label="Formatação Markdown">
+    <button type="button" class="secondary mini" data-md="bold" title="Negrito"${off}><b>B</b></button>
+    <button type="button" class="secondary mini" data-md="italic" title="Itálico"${off}><i>I</i></button>
+    <button type="button" class="secondary mini" data-md="heading" title="Título"${off}>H</button>
+    <button type="button" class="secondary mini" data-md="list" title="Lista"${off}>☷</button>
+    <button type="button" class="secondary mini" data-md="link" title="Link"${off}>🔗</button>
+    <span class="small markdownHint">Markdown</span>
+  </div>`;
+}
+function markdownEditorMarkup(id,{disabled=false,placeholder='Escreva em Markdown...'}={}){
+  return `${markdownToolbarMarkup(id,disabled)}<textarea id="${id}" class="markdownEditor" placeholder="${mdEscape(placeholder)}" ${disabled?'disabled':''}></textarea><div class="markdownPreviewLabel small">Pré-visualização</div><div id="${id}Preview" class="markdownDisplay markdownPreview"></div>`;
+}
+function applyMarkdownAction(el,action){
+  const start=el.selectionStart,end=el.selectionEnd,value=el.value,selected=value.slice(start,end);
+  const replace=(text,selStart,selEnd)=>{el.setRangeText(text,start,end,'end');el.focus();el.setSelectionRange(start+selStart,start+selEnd);el.dispatchEvent(new Event('input',{bubbles:true}))};
+  if(action==='bold')return replace(`**${selected||'texto'}**`,2,2+(selected||'texto').length);
+  if(action==='italic')return replace(`*${selected||'texto'}*`,1,1+(selected||'texto').length);
+  if(action==='heading'){
+    const text=selected||'Título';const transformed=text.split('\n').map(line=>`## ${line.replace(/^#{1,6}\s+/,'')}`).join('\n');return replace(transformed,3,transformed.length);
+  }
+  if(action==='list'){
+    const text=selected||'Item da lista';const transformed=text.split('\n').map(line=>`- ${line.replace(/^\s*[-+*]\s+/,'')}`).join('\n');return replace(transformed,2,transformed.length);
+  }
+  if(action==='link'){
+    const text=selected||'texto do link',insert=`[${text}](https://)`;replace(insert,1,1+text.length);
+  }
+}
+function setupMarkdownEditor(id,initial=''){
+  const el=document.getElementById(id),preview=document.getElementById(id+'Preview');if(!el)return;
+  el.value=String(initial??'');
+  const update=()=>{if(preview)preview.innerHTML=el.value.trim()?renderMarkdown(el.value):'<span class="small">Nada para visualizar.</span>'};
+  el.addEventListener('input',update);update();
+  document.querySelectorAll(`[data-editor="${id}"] [data-md]`).forEach(button=>button.onclick=()=>applyMarkdownAction(el,button.dataset.md));
 }
 function clientLogo(event){return /^data:image\/(png|jpe?g|webp);base64,/i.test(event.client_logo_data||'')?`<img class="clientLogo" src="${esc(event.client_logo_data)}" alt="Logo do cliente">`:''}
 function logoPickerMarkup(){return '<label>Logo do cliente</label><input id="clientLogoFile" type="file" accept="image/png,image/jpeg,image/webp"><div class="small">PNG, JPEG ou WebP, até 5 MB. A imagem será reduzida automaticamente.</div><div id="clientLogoPreview"></div><button id="removeClientLogo" type="button" class="secondary mini">Remover logo</button><div id="clientLogoError" class="error" hidden></div>'}
