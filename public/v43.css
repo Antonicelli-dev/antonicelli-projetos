@@ -46,13 +46,16 @@ h1 .clientLogo{width:64px;height:64px}
   .sortDirectionBtn{width:100%!important;margin:0}
 }
 
-/* V4.3.3 — editor Markdown para anotações e informações adicionais */
+/* V4.3.4 — editor visual único para anotações e informações adicionais */
 .markdownToolbar{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:8px 0 6px}
 .markdownToolbar button{min-width:34px;height:32px;padding:5px 8px}
 .markdownHint{margin-left:4px}
-.markdownEditor{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;line-height:1.5;tab-size:2}
-.markdownPreviewLabel{margin:10px 0 5px;font-weight:700}
-.markdownPreview{min-height:44px;border:1px solid #e0e3e7;border-radius:8px;background:#f8f9fa;padding:11px 12px;overflow-wrap:anywhere}
+.markdownEditor{min-height:150px;line-height:1.5}
+.richEditor{width:100%;border:1px solid #cfd4da;border-radius:8px;background:#fff;padding:11px 12px;overflow-wrap:anywhere;outline:none}
+.richEditor:focus{border-color:#7b8794;box-shadow:0 0 0 2px rgba(0,0,0,.06)}
+.richEditor:empty:before{content:attr(data-placeholder);color:#8a9199;pointer-events:none}
+.richEditor h1,.richEditor h2,.richEditor h3,.richEditor h4,.richEditor h5,.richEditor h6{margin:10px 0 6px;line-height:1.25}
+.richEditor h2{font-size:1.3em}.richEditor ul,.richEditor ol{padding-left:24px}.richEditor a{color:#175ec7;text-decoration:underline}
 .markdownDisplay>*:first-child{margin-top:0}.markdownDisplay>*:last-child{margin-bottom:0}
 .markdownDisplay p{margin:0 0 9px;line-height:1.5}.markdownDisplay h1,.markdownDisplay h2,.markdownDisplay h3,.markdownDisplay h4,.markdownDisplay h5,.markdownDisplay h6{margin:12px 0 7px;line-height:1.25}
 .markdownDisplay h1{font-size:1.45em}.markdownDisplay h2{font-size:1.3em}.markdownDisplay h3{font-size:1.16em}.markdownDisplay h4,.markdownDisplay h5,.markdownDisplay h6{font-size:1.05em}
@@ -62,4 +65,4 @@ h1 .clientLogo{width:64px;height:64px}
 .noteTooltip.markdownDisplay a{color:#cfe4ff}
 .noteTooltip.markdownDisplay h1,.noteTooltip.markdownDisplay h2,.noteTooltip.markdownDisplay h3,.noteTooltip.markdownDisplay h4,.noteTooltip.markdownDisplay h5,.noteTooltip.markdownDisplay h6{font-size:14px;margin:7px 0 4px}
 .noteTooltip.markdownDisplay p{margin:0 0 6px}.noteTooltip.markdownDisplay ul,.noteTooltip.markdownDisplay ol{margin:4px 0 7px;padding-left:19px}
-@media(max-width:700px){.markdownToolbar button{min-width:40px;height:38px}.markdownEditor{min-height:170px;font-size:16px}.markdownPreview{font-size:14px}}
+@media(max-width:700px){.markdownToolbar button{min-width:40px;height:38px}.markdownEditor{min-height:170px;font-size:16px}}

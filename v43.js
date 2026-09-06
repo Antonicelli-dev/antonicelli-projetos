@@ -3,7 +3,7 @@ const {parse}=require('csv-parse/sync');
 function sanitizeRich(value){
   if(value===null||value===undefined)return null;
   if(typeof value!=='string'||value.length>100000){const e=new Error('Informações adicionais: limite de 100.000 caracteres.');e.status=400;throw e}
-  return sanitizeHtml(value,{allowedTags:['p','br','div','strong','b','em','i','u','ul','ol','li'],allowedAttributes:{}});
+  return sanitizeHtml(value,{allowedTags:['p','br','div','strong','b','em','i','h1','h2','h3','h4','h5','h6','ul','ol','li','a'],allowedAttributes:{a:['href','target','rel']},allowedSchemes:['http','https','mailto'],transformTags:{a:(tagName,attribs)=>({tagName:'a',attribs:{...attribs,target:'_blank',rel:'noopener noreferrer'}})}});
 }
 function plainText(value){return sanitizeHtml(String(value||'').replace(/<\/(p|div|li)>/gi,'\n').replace(/<br\s*\/?>/gi,'\n'),{allowedTags:[],allowedAttributes:{}}).replace(/&(amp|lt|gt|quot|apos|#39);/g,(_,key)=>({amp:'&',lt:'<',gt:'>',quot:'"',apos:"'",'#39':"'"}[key]))}
 function parseTemplateCsv(csv){

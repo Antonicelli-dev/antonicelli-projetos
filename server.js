@@ -824,7 +824,7 @@ app.patch('/api/tasks/:id',auth,async(req,res)=>{
   let name=task.name,phase_name=task.phase_name,category_name=task.category_name;
   let start_date=req.body.start_date!==undefined?(req.body.start_date||null):task.start_date;
   let end_date=req.body.end_date!==undefined?(req.body.end_date||null):task.end_date;
-  let notes=req.body.notes!==undefined?String(req.body.notes||''):String(task.notes||'');
+  let notes=req.body.notes!==undefined?(sanitizeRich(req.body.notes)||''):String(task.notes||'');
 
   const validStatuses=['Não Iniciada','Em Andamento','Concluída','Atrasada'];
   if(!validStatuses.includes(status))return res.status(400).json({error:'Status inválido'});
