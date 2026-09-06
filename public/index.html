@@ -105,12 +105,16 @@ label{display:block;font-size:12px;font-weight:bold;margin:10px 0 5px}.small{fon
 
 @media(max-width:900px){.event,.task,.filters,.detailGrid,.detailMeta{grid-template-columns:1fr}.toolbar,.phaseHead{align-items:flex-start;flex-direction:column}}
 </style>
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<link rel="stylesheet" href="/v43.css">
 </head>
 <body>
 <header><div class="logo"><img src="/assets/logo-antonicelli.png" alt="Antonicelli Comunicação e Eventos"></div><div id="userbar"></div></header>
 <main id="app" class="wrap"></main>
 <div class="modal" id="modal"><div class="modalbox" id="modalbox"></div></div>
 
+<script src="/vendor/purify.min.js"></script>
+<script src="/v43-ui.js"></script>
 <script>
 let token=localStorage.getItem('antonicelli_token'),me=null,currentEvent=null,currentTemplate=null,templateSummaries=[],allUsers=[];
 const app=document.getElementById('app'),modalEl=document.getElementById('modal'),modalBox=document.getElementById('modalbox');
@@ -240,19 +244,19 @@ async function showInviteRegistration(inviteToken){
 function showLogin(error=''){
   document.getElementById('userbar').innerHTML='';
   app.innerHTML=`<div class="card login"><h1>Gerenciamento de Projetos</h1><div class="small">Acesso Antonicelli</div>${error?`<div class="error">${esc(error)}</div>`:''}
-  <form id="loginForm"><label>E-mail</label><input id="email" type="email" value="admin@antonicelli.local" required>
-  <label>Senha</label><input id="pass" type="password" value="admin123" required><button class="primary" style="width:100%;margin-top:15px">Entrar</button></form></div>`;
+  <form id="loginForm"><label>E-mail</label><input id="email" type="email" required>
+  <label>Senha</label><input id="pass" type="password" required><button class="primary" style="width:100%;margin-top:15px">Entrar</button></form></div>`;
   loginForm.onsubmit=async e=>{e.preventDefault();try{const d=await api('/api/login',{method:'POST',body:{email:email.value,password:pass.value}});
-  token=d.token;localStorage.setItem('antonicelli_token',token);me=await api('/api/me');await loadEvents()}catch(err){showLogin(err.message)}}
+  token=d.token;localStorage.setItem('antonicelli_token',token);me=await api('/api/me');await restoreRoute()}catch(err){showLogin(err.message)}}
 }
 async function boot(){
   const inviteToken=new URLSearchParams(location.search).get('invite');
   if(inviteToken)return showInviteRegistration(inviteToken);
   if(!token)return showLogin();
-  try{me=await api('/api/me');await loadEvents()}
+  try{me=await api('/api/me');userbar();await restoreRoute()}
   catch{localStorage.removeItem('antonicelli_token');token=null;showLogin()}
 }
-function logout(){localStorage.removeItem('antonicelli_token');token=null;me=null;showLogin()}
+function logout(){++viewRevision;currentEvent=null;allUsers=[];templateSummaries=[];localStorage.removeItem('antonicelli_token');token=null;me=null;showLogin()}
 function userbar(){
   document.getElementById('userbar').innerHTML=`<div class="userInfo">
     ${avatarMarkup(me)}
@@ -335,16 +339,17 @@ async function openProfileModal(){
 }
 
 async function loadEvents(){
-  userbar();const events=await api('/api/events');
+  const view=beginView('/trabalhos');userbar();const events=await api('/api/events');if(view!==viewRevision)return;
   app.innerHTML=`<div class="toolbar"><div><h1 style="margin:0">Trabalhos em Andamento</h1><div class="small">Gerenciamento de projetos e tarefas</div></div>
   <div class="actions"><button class="secondary" id="calendarBtn">Calendário de Tarefas</button><button class="secondary" id="myTasksBtn">Minhas tarefas</button>
-  ${me.role==='admin'?'<button class="secondary" id="archivedBtn">Arquivados</button><button class="secondary" id="trashBtn">Lixeira</button><button class="secondary" id="templateBtn">Editar Modelos</button><button class="primary" id="newEventBtn">+ Novo trabalho</button>':''}</div></div>
-  ${events.map(e=>`<div class="card event" data-event-id="${e.id}"><div><div><span class="workTypeBadge">${esc(e.work_type||'Trabalho')}</span><b>${esc(e.name)}</b></div><div class="small" style="margin-top:6px">${[e.client,e.place,workListDate(e)].filter(Boolean).map(esc).join(' · ')||'Sem informações adicionais'}</div></div>
+  ${me.role==='admin'?'<button class="secondary" id="archivedBtn">Arquivados</button><button class="secondary" id="trashBtn">Lixeira</button><button class="secondary" id="usersBtn">Usuários</button><button class="secondary" id="templateBtn">Editar Modelos</button><button class="primary" id="newEventBtn">+ Novo trabalho</button>':''}</div></div>
+  ${events.map(e=>`<div class="card event" data-event-id="${e.id}"><div><div><span class="workTypeBadge">${esc(e.work_type||'Trabalho')}</span>${clientLogo(e)}<b>${esc(e.name)}</b></div><div class="small" style="margin-top:6px">${[e.client,e.place,workListDate(e)].filter(Boolean).map(esc).join(' · ')||'Sem informações adicionais'}</div></div>
   <div><div class="small">${e.progress}% concluído</div><div class="progress"><div class="bar" style="width:${e.progress}%"></div></div></div>
   ${me.role==='admin'?`<div class="listActions"><button class="secondary archiveEvt" data-id="${e.id}" data-name="${esc(e.name)}">Arquivar</button><button class="danger delEvt" data-id="${e.id}" data-name="${esc(e.name)}">Excluir</button></div>`:''}</div>`).join('')||'<div class="card emptyState">Nenhum trabalho em andamento.</div>'}`;
   calendarBtn.onclick=openCalendar;
   myTasksBtn.onclick=openMyTasks;
   if(me.role==='admin'){
+    usersBtn.onclick=openUsers;
     archivedBtn.onclick=openArchivedEvents;
     trashBtn.onclick=openTrash;
     templateBtn.onclick=()=>{templateSummaries=[];openTemplateEditor()};
@@ -438,8 +443,9 @@ function calendarResponsibles(task){
 }
 
 async function openCalendar(initialDate=null){
-  userbar();
-  calendarTaskCache=await api('/api/calendar-events');
+  const view=beginView('/calendario');userbar();
+  const tasks=await api('/api/calendar-events');if(view!==viewRevision)return;
+  calendarTaskCache=tasks;
   const today=new Date();
   if(initialDate){
     const p=dateParts(initialDate);
@@ -533,13 +539,13 @@ function openCalendarDay(date,tasks){
 }
 
 async function openArchivedEvents(){
-  userbar();
-  const events=await api('/api/events-archived');
+  const view=beginView('/arquivados');userbar();
+  const events=await api('/api/events-archived');if(view!==viewRevision)return;
   app.innerHTML=`<div class="toolbar">
     <div><button class="secondary" id="backFromArchived">← Voltar para lista</button><h1 style="margin-bottom:4px">Trabalhos Arquivados</h1><div class="small">Trabalhos concluídos ou retirados da lista principal.</div></div>
   </div>
   ${events.map(e=>`<div class="card event archivedEvent" data-event-id="${e.id}">
-    <div><div><span class="workTypeBadge">${esc(e.work_type||'Trabalho')}</span><b>${esc(e.name)}</b></div>
+    <div><div><span class="workTypeBadge">${esc(e.work_type||'Trabalho')}</span>${clientLogo(e)}<b>${esc(e.name)}</b></div>
       <div class="small" style="margin-top:6px">${[e.client,e.place,workListDate(e)].filter(Boolean).map(esc).join(' · ')||'Sem informações adicionais'}</div>
       <div class="archiveMeta">Arquivado em ${formatDateTimeBR(e.archived_at)}</div>
     </div>
@@ -565,14 +571,14 @@ async function openArchivedEvents(){
 }
 
 async function openTrash(){
-  userbar();
-  const events=await api('/api/events-trash');
+  const view=beginView('/lixeira');userbar();
+  const events=await api('/api/events-trash');if(view!==viewRevision)return;
   app.innerHTML=`<div class="toolbar">
     <div><button class="secondary" id="backFromTrash">← Voltar para lista</button><h1 style="margin-bottom:4px">Lixeira</h1><div class="small">Trabalhos excluídos podem ser restaurados ou apagados permanentemente.</div></div>
   </div>
   <div class="note">A exclusão permanente não pode ser desfeita e remove também as tarefas e dados vinculados ao trabalho.</div>
   ${events.map(e=>`<div class="card">
-    <div><div><span class="workTypeBadge">${esc(e.work_type||'Trabalho')}</span><b>${esc(e.name)}</b></div>
+    <div><div><span class="workTypeBadge">${esc(e.work_type||'Trabalho')}</span>${clientLogo(e)}<b>${esc(e.name)}</b></div>
       <div class="small" style="margin-top:6px">${[e.client,e.place,workListDate(e)].filter(Boolean).map(esc).join(' · ')||'Sem informações adicionais'}</div>
       <div class="archiveMeta">Excluído em ${formatDateTimeBR(e.deleted_at)}</div>
     </div>
@@ -602,7 +608,8 @@ function formatDateTimeBR(value){
 }
 
 async function openMyTasks(){
-  const tasks=await api('/api/my-tasks');
+  const view=beginView('/minhas-tarefas');userbar();
+  const tasks=await api('/api/my-tasks');if(view!==viewRevision)return;
   app.innerHTML=`<div class="toolbar"><div><button class="secondary" id="backHome">← Trabalhos</button><h1>Minhas tarefas</h1></div></div>
   ${tasks.map(t=>`<div class="card"><b>${esc(t.name)}</b><div class="small">${esc(t.event_name)} · ${esc(t.phase_name)} / ${esc(t.category_name)} · ${esc(t.status)}</div>
   <div style="margin-top:10px"><button class="secondary openTaskEvent" data-id="${t.event_id}">Abrir evento</button></div></div>`).join('')||'<div class="card small">Nenhuma tarefa atribuída a você.</div>'}`;
@@ -626,9 +633,12 @@ async function openNewEventModal(){
   <div class="detailGrid"><div><label>Data de início <span class="small">(opcional)</span></label><input id="eventDate" type="date"></div><div><label>Data de término</label><input id="eventEndDate" type="date"></div></div>
   <label>Local</label><input id="eventPlace">
   <label>Número de participantes</label><input id="eventParticipants" type="number" min="0" step="1">
-  <label>Informações adicionais</label><textarea id="eventAdditionalInfo" placeholder="Opcional"></textarea>
+  <label>Informações adicionais</label>${richEditorMarkup("eventAdditionalInfo")}
+  ${logoPickerMarkup()}
   <div id="eventError"></div>
   <div class="actions" style="justify-content:flex-end;margin-top:18px"><button type="button" class="secondary" id="cancelEventBtn">Cancelar</button><button class="primary" id="createEventBtn">Criar trabalho</button></div></form>`);
+  setupRichEditor('eventAdditionalInfo',{});
+  const getLogo=setupLogoPicker();
   cancelEventBtn.onclick=closeModal;
   newEventForm.onsubmit=async e=>{
     e.preventDefault();createEventBtn.disabled=true;
@@ -641,16 +651,20 @@ async function openNewEventModal(){
         end_date:eventEndDate.value||null,
         place:eventPlace.value.trim(),
         participants:eventParticipants.value===''?null:Number(eventParticipants.value),
-        additional_info:eventAdditionalInfo.value.trim()
+        additional_info_html:cleanRich(eventAdditionalInfo.innerHTML),client_logo_data:await getLogo()
       }});
       closeModal();openEvent(r.id)
     }catch(err){eventError.innerHTML=`<div class="error">${esc(err.message)}</div>`;createEventBtn.disabled=false}
   }
 }
 
-async function manageMembers(){
-  allUsers=await api('/api/users');
-  currentEvent=await api('/api/events/'+currentEvent.id);
+async function manageMembers(refresh=true){
+  if(refresh){
+    const id=currentEvent.id;
+    const [users,members]=await Promise.all([api('/api/users'),api('/api/events/'+id+'/members')]);
+    if(currentEvent.id!==id)return;
+    allUsers=users;currentEvent.members=members;
+  }
   const memberIds=new Set(currentEvent.members.map(m=>Number(m.id)));
 
   showModal(`<div class="toolbar" style="margin-bottom:10px">
@@ -699,8 +713,16 @@ async function manageMembers(){
   document.getElementById('addMemberBtn').onclick=async()=>{
     const v=document.getElementById('memberSelect').value;
     if(!v)return;
-    await api('/api/events/'+currentEvent.id+'/members',{method:'POST',body:{user_id:Number(v)}});
-    await manageMembers();
+    const btn=document.getElementById('addMemberBtn');btn.disabled=true;
+    const event=currentEvent;
+    try{
+      await api('/api/events/'+event.id+'/members',{method:'POST',body:{user_id:Number(v)}});
+      if(currentEvent!==event)return;
+      const member=allUsers.find(u=>Number(u.id)===Number(v));
+      if(member&&!event.members.some(m=>Number(m.id)===Number(v)))event.members.push(member);
+      event.members.sort((a,b)=>a.name.localeCompare(b.name));
+      refreshMemberPickers();await manageMembers(false);
+    }catch(err){alert(err.message);btn.disabled=false}
   };
 
   document.getElementById('inviteMemberBtn').onclick=async()=>{
@@ -731,14 +753,15 @@ async function manageMembers(){
   document.querySelectorAll('.removeMember').forEach(b=>b.onclick=async()=>{
     if(confirm('Remover esta pessoa apenas deste evento?')){
       await api('/api/events/'+currentEvent.id+'/members/'+b.dataset.id,{method:'DELETE'});
-      await manageMembers();
+      const fresh=await api('/api/events/'+currentEvent.id);
+      await openEvent(fresh.id,fresh);await manageMembers();
     }
   });
 
   document.querySelectorAll('.deleteCollaborator').forEach(b=>b.onclick=async()=>{
     if(confirm(`Excluir ${b.dataset.name} da plataforma? O acesso será desativado e a pessoa será removida de todos os eventos. O histórico será preservado.`)){
       await api('/api/users/'+b.dataset.id,{method:'DELETE'});
-      await manageMembers();
+      await openEvent(currentEvent.id);await manageMembers();
     }
   });
 }
@@ -947,7 +970,7 @@ function openEventDetailsModal(){
   if(me.role!=='admin')return;
 
   showModal(`<div class="toolbar" style="margin-bottom:8px">
-    <div><h2 style="margin:0">Mais detalhes do evento</h2><div class="small">Edite as informações gerais do evento.</div></div>
+    <div><h2 style="margin:0">Mais detalhes do trabalho</h2><div class="small">Edite as informações gerais do trabalho.</div></div>
     <button class="secondary" id="closeEventDetails">Fechar</button>
   </div>
 
@@ -970,7 +993,8 @@ function openEventDetailsModal(){
     <input id="detailParticipants" type="number" min="0" step="1" value="${currentEvent.participants??''}">
 
     <label>Informações adicionais</label>
-    <textarea id="detailAdditionalInfo" placeholder="Informações extras sobre o evento...">${esc(currentEvent.additional_info||'')}</textarea>
+    ${richEditorMarkup("detailAdditionalInfo")}
+    ${logoPickerMarkup()}
 
     <div id="eventDetailsError"></div>
     <div class="actions" style="justify-content:flex-end;margin-top:18px">
@@ -978,6 +1002,8 @@ function openEventDetailsModal(){
     </div>
   </form>`);
 
+  setupRichEditor('detailAdditionalInfo',currentEvent);
+  const getLogo=setupLogoPicker(currentEvent.client_logo_data);
   document.getElementById('closeEventDetails').onclick=closeModal;
   document.getElementById('eventDetailsForm').onsubmit=async e=>{
     e.preventDefault();
@@ -994,7 +1020,8 @@ function openEventDetailsModal(){
           end_date:document.getElementById('detailEndDate').value||null,
           place:document.getElementById('detailPlace').value.trim(),
           participants:document.getElementById('detailParticipants').value===''?null:Number(document.getElementById('detailParticipants').value),
-          additional_info:document.getElementById('detailAdditionalInfo').value
+          additional_info_html:cleanRich(document.getElementById('detailAdditionalInfo').innerHTML),
+          client_logo_data:await getLogo()
         }
       });
       closeModal();
@@ -1006,19 +1033,23 @@ function openEventDetailsModal(){
   };
 }
 
-async function openEvent(id){
-  currentEvent=await api('/api/events/'+id);
-  const grouped={};
+async function openEvent(id,loaded=null){
+  const view=beginView('/trabalho/'+id);userbar();
+  const event=loaded||await api('/api/events/'+id);
+  if(view!==viewRevision)return;
+  currentEvent=event;
+  const grouped=Object.create(null);
   for(const t of currentEvent.tasks){
-    if(!grouped[t.phase_name])grouped[t.phase_name]={};
+    if(!grouped[t.phase_name])grouped[t.phase_name]=Object.create(null);
     if(!grouped[t.phase_name][t.category_name])grouped[t.phase_name][t.category_name]=[];
     grouped[t.phase_name][t.category_name].push(t);
   }
   const phases=[...new Set(currentEvent.tasks.map(t=>t.phase_name))];
 
   app.innerHTML=`<div class="toolbar">
-    <div><button class="secondary" id="backBtn">← Voltar para lista</button><h1>${esc(currentEvent.name)}</h1></div>
+    <div><button class="secondary" id="backBtn">← Voltar para lista</button><h1>${clientLogo(currentEvent)}${esc(currentEvent.name)}</h1></div>
     <div class="actions">
+      <button class="secondary" id="exportCsvBtn">Exportar CSV</button>
       ${me.role==='admin'?'<button class="secondary" id="eventDetailsBtn">Mais detalhes</button><button class="secondary" id="membersBtn">Colaboradores</button>':''}
     </div>
   </div>
@@ -1033,6 +1064,7 @@ async function openEvent(id){
 
   
 
+  ${currentEvent.additional_info_html||currentEvent.additional_info?`<div class="card richDisplay">${eventRich(currentEvent)}</div>`:''}
   <div class="filters card">
     <select id="filterStatus"><option value="">Todos os status</option>${['Não Iniciada','Em Andamento','Concluída','Atrasada'].map(x=>`<option>${x}</option>`).join('')}</select>
     <select id="filterResp"><option value="">Todos os responsáveis</option><option value="none">Sem responsável</option>${currentEvent.members.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('')}</select>
@@ -1053,7 +1085,7 @@ async function openEvent(id){
         ${tasks.map(t=>`<div class="task" data-task-id="${t.id}" data-status="${esc(t.status)}" data-resp="${responsibleIds(t).join(',')||'none'}" data-phase="${esc(t.phase_name)}">
           <div style="display:flex;align-items:flex-start;gap:8px">
             ${me.role==='admin'?'<span class="dragHandle" title="Arrastar tarefa">⋮⋮</span>':''}
-            <div><span class="taskName">${esc(t.name)}</span>${String(t.notes||'').trim()?'<span class="noteIcon" title="Esta tarefa possui anotações">📝</span>':''}${(t.start_date||t.end_date)?`<div class="small">${t.start_date?'Início: '+formatDateBR(t.start_date):''}${t.start_date&&t.end_date?' · ':''}${t.end_date?'Fim: '+formatDateBR(t.end_date):''}</div>`:''}</div>
+            <div><span class="taskName">${esc(t.name)}</span>${String(t.notes||'').trim()?`<span class="noteIcon" tabindex="0" aria-label="Anotações">📝<span role="tooltip" class="noteTooltip">${esc(t.notes)}</span></span>`:''}${(t.start_date||t.end_date)?`<div class="small">${t.start_date?'Início: '+formatDateBR(t.start_date):''}${t.start_date&&t.end_date?' · ':''}${t.end_date?'Fim: '+formatDateBR(t.end_date):''}</div>`:''}</div>
           </div>
           <select class="taskStatus statusSelect ${statusClass(t.status)}" data-id="${t.id}" ${me.role==='guest'?'disabled':''}>${statusOptions(t.status)}</select>
           ${(t.responsibles||[]).length
@@ -1070,6 +1102,7 @@ async function openEvent(id){
     </div>`).join('')}
   </section>`).join('')}`;
 
+  document.getElementById('exportCsvBtn').onclick=()=>downloadWorkCsv(currentEvent.id);
   document.getElementById('backBtn').onclick=loadEvents;
   document.getElementById('filterStatus').onchange=filterTasks;
   document.getElementById('filterResp').onchange=filterTasks;
@@ -1169,13 +1202,14 @@ function addTaskToCategory(phaseName,categoryName){
 
 
 async function openTemplateEditor(selectedId=null,forceList=false){
+  const view=beginView('/modelos'+(selectedId?'/'+selectedId:''));userbar();
   // V3.5.1: a lista de modelos é carregada uma única vez e contém só metadados.
   if(forceList||!templateSummaries.length){
-    templateSummaries=await api('/api/templates');
+    const summaries=await api('/api/templates');if(view!==viewRevision)return;templateSummaries=summaries;
   }
 
   const selectedSummary=templateSummaries.find(t=>Number(t.id)===Number(selectedId))||templateSummaries[0]||null;
-  currentTemplate=selectedSummary?await api('/api/templates/'+selectedSummary.id):null;
+  const template=selectedSummary?await api('/api/templates/'+selectedSummary.id):null;if(view!==viewRevision)return;currentTemplate=template;
 
   // Atualiza no cache somente os metadados do modelo que acabou de ser carregado.
   if(currentTemplate){
@@ -1194,7 +1228,7 @@ async function openTemplateEditor(selectedId=null,forceList=false){
 
   app.innerHTML=`<div class="toolbar">
     <div><button class="secondary" id="backEvents">← Trabalhos</button><h1 style="margin-bottom:4px">Modelos de trabalho</h1><div class="small">Cada modelo possui suas próprias fases, categorias e tarefas.</div></div>
-    <button class="primary" id="newTemplateBtn">+ Novo modelo</button>
+    <div class="actions"><button class="secondary" id="importCsvBtn">Importar CSV</button><button class="primary" id="newTemplateBtn">+ Novo modelo</button></div>
   </div>
   <div class="note">Ao criar um trabalho, você escolhe qual modelo será copiado. Alterações posteriores no modelo não mudam trabalhos já criados.</div>
 
@@ -1232,6 +1266,7 @@ async function openTemplateEditor(selectedId=null,forceList=false){
   </div>`).join('')||'<div class="card small">Este modelo ainda não possui fases.</div>'}`:''}`;
 
   document.getElementById('backEvents').onclick=loadEvents;
+  document.getElementById('importCsvBtn').onclick=openCsvImport;
   document.getElementById('newTemplateBtn').onclick=openNewTemplateModal;
 
   // Trocar de modelo agora baixa somente a estrutura do modelo escolhido.

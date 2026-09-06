@@ -16,6 +16,14 @@ const pool=new Pool({
 });
 
 const app=express();
+// Express 4: forward rejected async handlers to the error middleware.
+for(const method of ['get','post','patch','delete']){
+  const register=app[method].bind(app);
+  app[method]=(url,...handlers)=>register(url,...handlers.map(fn=>typeof fn==='function'?
+    (req,res,next)=>{try{Promise.resolve(fn(req,res,next)).catch(next)}catch(e){next(e)}}:fn));
+}
+const {sanitizeRich, plainText, registerV43}=require('./v43');
+app.get('/vendor/purify.min.js',(req,res)=>res.sendFile(require.resolve('dompurify/dist/purify.min.js')));
 app.use(express.json({limit:'2mb'}));
 app.use(express.static(path.join(__dirname,'public')));
 
@@ -30,10 +38,13 @@ async function q(text,params=[]){return pool.query(text,params)}
 
 async function init(){
   await q(fs.readFileSync(path.join(__dirname,'schema.sql'),'utf8'));
+  await q(fs.readFileSync(path.join(__dirname,'migrations','v4_3.sql'),'utf8'));
 
   const uc=await q('SELECT COUNT(*)::int c FROM users');
   if(uc.rows[0].c===0){
-    const hash=bcrypt.hashSync('admin123',10);
+    if(process.env.NODE_ENV==='production'&&String(process.env.INITIAL_ADMIN_PASSWORD||'').length<12)
+      throw new Error('Banco vazio: configure INITIAL_ADMIN_PASSWORD com pelo menos 12 caracteres para criar o primeiro administrador.');
+    const hash=await bcrypt.hash(process.env.INITIAL_ADMIN_PASSWORD||'admin123',10);
     await q(
       'INSERT INTO users(name,email,password_hash,role) VALUES($1,$2,$3,$4)',
       ['Administrador','admin@antonicelli.local',hash,'admin']
@@ -80,10 +91,13 @@ async function init(){
   }
 }
 
-function auth(req,res,next){
+async function auth(req,res,next){
   try{
     const t=(req.headers.authorization||'').replace(/^Bearer\s+/,'');
-    req.user=jwt.verify(t,JWT_SECRET);
+    const claims=jwt.verify(t,JWT_SECRET);
+    const user=(await q('SELECT id,name,email,role FROM users WHERE id=$1 AND active=TRUE',[claims.id])).rows[0];
+    if(!user)return res.status(401).json({error:'Conta inativa ou não encontrada'});
+    req.user=user;
     next();
   }catch{
     res.status(401).json({error:'Não autenticado'});
@@ -119,9 +133,9 @@ function validateAvatarData(value){
   if(value===null||value===undefined||value==='')return '';
   const s=String(value);
   if(!/^data:image\/(png|jpeg|jpg|webp);base64,/i.test(s))
-    throw new Error('Formato de foto inválido');
+    throw Object.assign(new Error('Formato de imagem inválido'),{status:400});
   if(s.length>1100000)
-    throw new Error('A foto de perfil é muito grande');
+    throw Object.assign(new Error('A imagem é muito grande'),{status:400});
   return s;
 }
 
@@ -154,7 +168,7 @@ async function activeTemplate(){
   return (await q('SELECT * FROM templates WHERE active=TRUE ORDER BY id LIMIT 1')).rows[0];
 }
 async function templateWithStructure(id){
-  // V4.2.1 Render: somente 2 consultas ao banco, independentemente do tamanho do modelo.
+  // V4.3 Render: somente 2 consultas ao banco, independentemente do tamanho do modelo.
   const t=(await q('SELECT * FROM templates WHERE id=$1 AND active=TRUE',[id])).rows[0];
   if(!t)return null;
 
@@ -222,7 +236,7 @@ app.post('/api/login',async(req,res)=>{
     const {email,password}=req.body||{};
     const r=await q('SELECT * FROM users WHERE email=$1 AND active=TRUE',[email||'']);
     const u=r.rows[0];
-    if(!u||!bcrypt.compareSync(password||'',u.password_hash))
+    if(!u||!await bcrypt.compare(password||'',u.password_hash))
       return res.status(401).json({error:'E-mail ou senha inválidos'});
     const token=jwt.sign({id:u.id,name:u.name,email:u.email,role:u.role},JWT_SECRET,{expiresIn:'12h'});
     res.json({token,user:{id:u.id,name:u.name,email:u.email,role:u.role,avatar_data:u.avatar_data||''}});
@@ -355,7 +369,7 @@ app.post('/api/register-invite',async(req,res)=>{
     if(existingUser?.active)
       throw new Error('Já existe uma conta ativa com este e-mail');
 
-    const hash=bcrypt.hashSync(password,10);
+    const hash=await bcrypt.hash(password,10);
     let user;
 
     if(existingUser){
@@ -552,15 +566,11 @@ app.get('/api/events',auth,async(req,res)=>{
         AND e.deleted_at IS NULL
       ORDER BY e.event_date DESC NULLS LAST,e.id DESC`,[req.user.id]);
   }
-  const rows=[];
-  for(const e of r.rows){
-    const p=(await q(`SELECT COUNT(*)::int total,
-      COUNT(*) FILTER (WHERE status='Concluída')::int done
-      FROM event_tasks WHERE event_id=$1`,[e.id])).rows[0];
-    e.progress=p.total?Math.round((p.done/p.total)*100):0;
-    rows.push(e);
-  }
-  res.json(rows);
+  const progress=(await q(`SELECT event_id,COUNT(*)::int total,
+    COUNT(*) FILTER (WHERE status='Concluída')::int done
+    FROM event_tasks WHERE event_id=ANY($1::int[]) GROUP BY event_id`,[r.rows.map(e=>e.id)])).rows;
+  const totals=new Map(progress.map(p=>[p.event_id,p]));
+  res.json(r.rows.map(e=>{const p=totals.get(e.id);return {...e,progress:p?.total?Math.round(p.done/p.total*100):0}}));
 });
 app.get('/api/calendar-events',auth,async(req,res)=>{
   let r;
@@ -619,7 +629,13 @@ app.get('/api/calendar-events',auth,async(req,res)=>{
 
 app.post('/api/events',auth,admin,async(req,res)=>{
   const {name,client,event_date,end_date,place,participants,additional_info,template_id}=req.body||{};
+  const additional_info_html=sanitizeRich(req.body.additional_info_html);
+  const client_logo_data=validateAvatarData(req.body.client_logo_data);
   if(!String(name||'').trim())return res.status(400).json({error:'Nome do trabalho é obrigatório'});
+  if(event_date&&end_date&&new Date(end_date)<new Date(event_date))
+    return res.status(400).json({error:'A data de término não pode ser anterior à data de início'});
+  if(participants!==undefined&&participants!==null&&participants!==''&&(!Number.isInteger(Number(participants))||Number(participants)<0))
+    return res.status(400).json({error:'Número de participantes inválido'});
   const tid=Number(template_id);
   if(!tid)return res.status(400).json({error:'Selecione um modelo para o trabalho'});
   const t=(await q('SELECT * FROM templates WHERE id=$1 AND active=TRUE',[tid])).rows[0];
@@ -629,17 +645,17 @@ app.post('/api/events',auth,admin,async(req,res)=>{
   try{
     await db.query('BEGIN');
     const e=(await db.query(
-      `INSERT INTO events(name,client,event_date,end_date,place,participants,additional_info,template_id,template_version,created_by)
-       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
+      `INSERT INTO events(name,client,event_date,end_date,place,participants,additional_info,template_id,template_version,created_by,client_logo_data,additional_info_html)
+       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id`,
       [
         String(name).trim(),
         client||'',
         event_date||null,
         end_date||null,
         place||'',
-        participants!==undefined&&participants!==''?Number(participants):null,
-        additional_info||'',
-        t.id,t.version,req.user.id
+        participants!==undefined&&participants!==null&&participants!==''?Number(participants):null,
+        req.body.additional_info_html!==undefined?plainText(additional_info_html):additional_info||'',
+        t.id,t.version,req.user.id,client_logo_data,additional_info_html
       ]
     )).rows[0];
     let pos=0;
@@ -670,7 +686,7 @@ app.get('/api/events/:id',auth,async(req,res)=>{
   if(e.archived_at && req.user.role!=='admin')return res.status(404).json({error:'Trabalho não encontrado'});
   if(!(await canAccessEvent(req.user,id)))return res.status(403).json({error:'Sem acesso'});
 
-  e.tasks=(await q(`SELECT et.*,
+  const tasksPromise=q(`SELECT et.*,
       COALESCE(
         json_agg(
           json_build_object(
@@ -689,13 +705,15 @@ app.get('/api/events/:id',auth,async(req,res)=>{
     LEFT JOIN users ru ON ru.id=tr.user_id AND ru.active=TRUE
     WHERE et.event_id=$1
     GROUP BY et.id
-    ORDER BY et.position,et.id`,[id])).rows;
+    ORDER BY et.position,et.id`,[id]);
 
-  e.members=(await q(`SELECT u.id,u.name,u.email,u.role
+  const membersPromise=q(`SELECT u.id,u.name,u.email,u.role, u.avatar_data
     FROM event_members em JOIN users u ON u.id=em.user_id
     WHERE em.event_id=$1
-    ORDER BY u.name`,[id])).rows;
-
+    ORDER BY u.name`,[id]);
+  const [tasks,members]=await Promise.all([tasksPromise,membersPromise]);
+  e.tasks=tasks.rows;e.members=members.rows;
+  e.additional_info_html=sanitizeRich(e.additional_info_html);
   res.json(e);
 });
 
@@ -714,7 +732,8 @@ app.patch('/api/events/:id',auth,admin,async(req,res)=>{
   const participants=req.body.participants!==undefined
     ? (req.body.participants===''||req.body.participants===null?null:Number(req.body.participants))
     : current.participants;
-  const additional_info=req.body.additional_info!==undefined
+  const additional_info_html=req.body.additional_info_html!==undefined?sanitizeRich(req.body.additional_info_html):req.body.additional_info!==undefined?null:current.additional_info_html;
+  const additional_info=req.body.additional_info_html!==undefined?plainText(additional_info_html):req.body.additional_info!==undefined
     ? String(req.body.additional_info||'')
     : String(current.additional_info||'');
 
@@ -724,11 +743,12 @@ app.patch('/api/events/:id',auth,admin,async(req,res)=>{
   if(participants!==null&&(!Number.isInteger(participants)||participants<0))
     return res.status(400).json({error:'Número de participantes inválido'});
 
+  const client_logo_data=req.body.client_logo_data!==undefined?validateAvatarData(req.body.client_logo_data):current.client_logo_data;
   await q(
     `UPDATE events SET
-      name=$1,client=$2,event_date=$3,end_date=$4,place=$5,participants=$6,additional_info=$7
+      name=$1,client=$2,event_date=$3,end_date=$4,place=$5,participants=$6,additional_info=$7,client_logo_data=$9,additional_info_html=$10
      WHERE id=$8`,
-    [name,client,event_date,end_date,place,participants,additional_info,id]
+    [name,client,event_date,end_date,place,participants,additional_info,id,client_logo_data,additional_info_html]
   );
 
   await q(
@@ -1078,6 +1098,8 @@ app.delete('/api/events/:id/permanent',auth,admin,async(req,res)=>{
   res.json({ok:true});
 });
 
+registerV43(app,{pool,q,auth,admin,canAccessEvent});
+
 app.get('/health',(req,res)=>{
   res.set('Cache-Control','no-store');
   res.status(200).json({ok:true,service:'antonicelli-projetos'});
@@ -1085,12 +1107,17 @@ app.get('/health',(req,res)=>{
 
 app.get('*',(req,res)=>res.sendFile(path.join(__dirname,'public','index.html')));
 
-try{
+app.use((err,req,res,next)=>{
+  console.error('Falha na requisição:',err.message);
+  res.status(err.status||500).json({error:err.status===413?'Arquivo excede o limite permitido':err.status===400?err.message:'Não foi possível concluir a operação. Tente novamente.'});
+});
+module.exports={app,init,pool};
+if(require.main===module)try{
   validateEnvironment();
   init()
     .then(()=>app.listen(PORT,'0.0.0.0',()=>{
       const publicUrl=process.env.RENDER_EXTERNAL_URL||`http://localhost:${PORT}`;
-      console.log(`Antonicelli V4.2.1 Render rodando em ${publicUrl}`);
+      console.log(`Antonicelli V4.3 Render rodando em ${publicUrl}`);
     }))
     .catch(e=>{console.error('Falha ao iniciar:',e);process.exit(1)});
 }catch(e){
