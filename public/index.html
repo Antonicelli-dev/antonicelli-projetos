@@ -113,10 +113,24 @@ label{display:block;font-size:12px;font-weight:bold;margin:10px 0 5px}.small{fon
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Antonicelli">
 <link rel="stylesheet" href="/v43.css">
+<link rel="stylesheet" href="/v50.css">
 </head>
 <body>
-<header><div class="logo"><img src="/assets/logo-antonicelli.png" alt="Antonicelli Comunicação e Eventos"></div><div id="userbar"></div></header>
-<main id="app" class="wrap"></main>
+<div class="mobileTopbar" id="mobileTopbar">
+  <button class="mobileMenuButton" id="mobileMenuButton" type="button" aria-label="Abrir menu">☰</button>
+  <img src="/assets/logo-antonicelli.png" alt="Antonicelli Comunicação e Eventos">
+</div>
+<div class="appShell">
+  <aside class="appSidebar" id="appSidebar">
+    <div class="sidebarBrand"><img src="/assets/logo-antonicelli.png" alt="Antonicelli Comunicação e Eventos"></div>
+    <nav class="sidebarNav" id="sidebarNav" aria-label="Navegação principal"></nav>
+    <div class="sidebarUser" id="userbar"></div>
+  </aside>
+  <div class="sidebarBackdrop" id="sidebarBackdrop"></div>
+  <section class="appWorkspace">
+    <main id="app" class="wrap"></main>
+  </section>
+</div>
 <div class="modal" id="modal"><div class="modalbox" id="modalbox"></div></div>
 
 <script src="/vendor/purify.min.js"></script>
@@ -169,6 +183,7 @@ function resizeAvatarFile(file,maxSize=512,quality=.82){
 }
 
 async function showInviteRegistration(inviteToken){
+  document.body.classList.add('authMode');
   document.getElementById('userbar').innerHTML='';
   try{
     const inv=await api('/api/invitations/'+encodeURIComponent(inviteToken));
@@ -248,6 +263,7 @@ async function showInviteRegistration(inviteToken){
 }
 
 function showLogin(error=''){
+  document.body.classList.add('authMode');
   document.getElementById('userbar').innerHTML='';
   app.innerHTML=`<div class="card login"><h1>Gerenciamento de Projetos</h1><div class="small">Acesso Antonicelli</div>${error?`<div class="error">${esc(error)}</div>`:''}
   <form id="loginForm"><label>E-mail</label><input id="email" type="email" required>
@@ -263,16 +279,47 @@ async function boot(){
   catch{localStorage.removeItem('antonicelli_token');token=null;showLogin()}
 }
 function logout(){++viewRevision;currentEvent=null;allUsers=[];templateSummaries=[];localStorage.removeItem('antonicelli_token');token=null;me=null;showLogin()}
+function navButton(id,icon,label,active=false){
+  return `<button type="button" class="sidebarNavItem${active?' active':''}" id="${id}"><span class="sidebarIcon" aria-hidden="true">${icon}</span><span>${label}</span></button>`;
+}
 function userbar(){
-  document.getElementById('userbar').innerHTML=`<div class="userInfo">
-    ${avatarMarkup(me)}
-    <span>${esc(me.name)} · ${esc(roleLabel(me.role))}</span>
-    <button class="secondary" id="profileBtn">Perfil</button>
-    <button class="secondary" id="logoutBtn">Sair</button>
+  document.body.classList.remove('authMode');
+  const path=location.pathname;
+  const nav=document.getElementById('sidebarNav');
+  nav.innerHTML=`
+    <div class="sidebarSection">
+      ${navButton('navWorks','▣','Trabalhos',path==='/trabalhos'||path.startsWith('/trabalho/'))}
+      ${navButton('navMyTasks','✓','Minhas tarefas',path==='/minhas-tarefas')}
+      ${navButton('navCalendar','▦','Calendário',path==='/calendario')}
+    </div>
+    ${me.role==='admin'?`<div class="sidebarSection"><div class="sidebarLabel">GERENCIAMENTO</div>
+      ${navButton('navModels','◇','Modelos',path.startsWith('/modelos'))}
+      ${navButton('navUsers','♙','Usuários',path==='/usuarios')}
+    </div>
+    <div class="sidebarSection"><div class="sidebarLabel">OUTROS</div>
+      ${navButton('navArchived','▤','Arquivados',path==='/arquivados')}
+      ${navButton('navTrash','♲','Lixeira',path==='/lixeira')}
+    </div>`:''}`;
+  document.getElementById('userbar').innerHTML=`<div class="sidebarProfile">
+    <button class="profileSummary" id="profileBtn" type="button">${avatarMarkup(me)}<span class="profileText"><strong>${esc(me.name)}</strong><small>${esc(roleLabel(me.role))}</small></span></button>
+    <button class="sidebarLogout" id="logoutBtn" type="button" title="Sair" aria-label="Sair">↪</button>
   </div>`;
   document.getElementById('profileBtn').onclick=openProfileModal;
   document.getElementById('logoutBtn').onclick=logout;
+  document.getElementById('navWorks').onclick=()=>{closeMobileSidebar();loadEvents()};
+  document.getElementById('navMyTasks').onclick=()=>{closeMobileSidebar();openMyTasks()};
+  document.getElementById('navCalendar').onclick=()=>{closeMobileSidebar();openCalendar()};
+  if(me.role==='admin'){
+    document.getElementById('navModels').onclick=()=>{closeMobileSidebar();templateSummaries=[];openTemplateEditor()};
+    document.getElementById('navUsers').onclick=()=>{closeMobileSidebar();openUsers()};
+    document.getElementById('navArchived').onclick=()=>{closeMobileSidebar();openArchivedEvents()};
+    document.getElementById('navTrash').onclick=()=>{closeMobileSidebar();openTrash()};
+  }
 }
+function openMobileSidebar(){document.body.classList.add('sidebarOpen')}
+function closeMobileSidebar(){document.body.classList.remove('sidebarOpen')}
+document.getElementById('mobileMenuButton').onclick=openMobileSidebar;
+document.getElementById('sidebarBackdrop').onclick=closeMobileSidebar;
 
 
 async function openProfileModal(){
@@ -347,10 +394,18 @@ async function openProfileModal(){
 let workSortKey=sessionStorage.getItem('workSortKey')||'created_at';
 let workSortDir=sessionStorage.getItem('workSortDir')||'desc';
 let workClientFilter=sessionStorage.getItem('workClientFilter')||'';
+let workTypeFilter=sessionStorage.getItem('workTypeFilter')||'';
+let workSearch=sessionStorage.getItem('workSearch')||'';
 function filteredWorks(events){
-  if(!workClientFilter)return [...events];
-  if(workClientFilter==='__EMPTY__')return events.filter(e=>!String(e.client||'').trim());
-  return events.filter(e=>String(e.client||'').trim()===workClientFilter);
+  const term=workSearch.trim().toLocaleLowerCase('pt-BR');
+  return events.filter(e=>{
+    const client=String(e.client||'').trim();
+    if(workClientFilter==='__EMPTY__' && client)return false;
+    if(workClientFilter && workClientFilter!=='__EMPTY__' && client!==workClientFilter)return false;
+    if(workTypeFilter && String(e.work_type||'').trim()!==workTypeFilter)return false;
+    if(term && !`${client} ${e.name||''} ${e.place||''}`.toLocaleLowerCase('pt-BR').includes(term))return false;
+    return true;
+  });
 }
 function sortedWorks(events){
   const dir=workSortDir==='asc'?1:-1;
@@ -376,54 +431,40 @@ function workTitle(e){
   return client?`<b>${esc(client)}</b><span class="workTitleSep"> | </span><b class="workName">${esc(name)}</b>`:`<b class="workName">${esc(name)}</b>`;
 }
 async function loadEvents(){
-  const view=beginView('/trabalhos');userbar();const events=await api('/api/events');if(view!==viewRevision)return;
+  const view=beginView('/trabalhos');userbar();
+  const events=await api('/api/events');if(view!==viewRevision)return;
+  renderWorkDashboard(events);
+}
+function renderWorkDashboard(events){
   const clients=[...new Set(events.map(e=>String(e.client||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR',{sensitivity:'base',numeric:true}));
+  const types=[...new Set(events.map(e=>String(e.work_type||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR',{sensitivity:'base',numeric:true}));
   if(workClientFilter && workClientFilter!=='__EMPTY__' && !clients.includes(workClientFilter))workClientFilter='';
-  const filtered=filteredWorks(events);
-  const ordered=sortedWorks(filtered);
+  if(workTypeFilter && !types.includes(workTypeFilter))workTypeFilter='';
+  const ordered=sortedWorks(filteredWorks(events));
   const hasEmptyClient=events.some(e=>!String(e.client||'').trim());
-  app.innerHTML=`<div class="toolbar dashboardToolbar"><div class="dashboardHeading"><h1 style="margin:0">Trabalhos em Andamento</h1><div class="small">Gerenciamento de projetos e tarefas</div></div>
-  <div class="actions dashboardActions">
-    ${me.role==='admin'?'<button class="primary newWorkBtn" id="newEventBtn">+ <span>Novo trabalho</span></button>':''}
-    <button class="secondary topNavBtn" id="calendarBtn" title="Calendário de tarefas" aria-label="Calendário de tarefas"><span class="topNavIcon" aria-hidden="true">▦</span><span class="actionLabel">Calendário</span></button>
-    <button class="secondary topNavBtn" id="myTasksBtn" title="Minhas tarefas" aria-label="Minhas tarefas"><span class="topNavIcon" aria-hidden="true">✓</span><span class="actionLabel">Minhas tarefas</span></button>
-    <div class="moreMenu ${me.role==='admin'?'':'moreMenuUser'}">
-      <button class="secondary moreMenuBtn" id="moreMenuBtn" type="button" aria-haspopup="true" aria-expanded="false" title="Mais opções"><span aria-hidden="true">⋯</span><span class="moreMenuLabel">Mais</span></button>
-      <div class="moreMenuDropdown" id="moreMenuDropdown" role="menu">
-        <button class="menuItem compactNavItem" id="calendarMenuBtn" role="menuitem"><span aria-hidden="true">▦</span> Calendário</button>
-        <button class="menuItem compactNavItem" id="myTasksMenuBtn" role="menuitem"><span aria-hidden="true">✓</span> Minhas tarefas</button>
-        ${me.role==='admin'?'<button class="menuItem" id="templateBtn" role="menuitem"><span aria-hidden="true">≡</span> Modelos</button><button class="menuItem" id="usersBtn" role="menuitem"><span aria-hidden="true">●</span> Usuários</button><div class="menuDivider"></div><button class="menuItem" id="archivedBtn" role="menuitem"><span aria-hidden="true">□</span> Arquivados</button><button class="menuItem menuDanger" id="trashBtn" role="menuitem"><span aria-hidden="true">♲</span> Lixeira</button>':''}
-      </div>
-    </div>
-  </div></div>
-  <div class="workListControls card"><div class="workControlGroup"><label for="workClientFilter">Cliente</label><select id="workClientFilter"><option value="">Todos os clientes</option>${clients.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')}${hasEmptyClient?'<option value="__EMPTY__">Sem cliente</option>':''}</select></div><div class="workControlGroup"><label for="workSort">Ordenar por</label><select id="workSort"><option value="created_at">Data de criação</option><option value="client">Nome do cliente</option><option value="type">Tipo de trabalho</option></select></div><button class="secondary mini sortDirectionBtn" id="workSortDirBtn" title="Inverter ordem" aria-label="Inverter ordem">${workSortDir==='asc'?'↑ Crescente':'↓ Decrescente'}</button></div>
-  <div class="workList">${ordered.map(e=>`<div class="card event workRow" data-event-id="${e.id}"><div class="workIdentity">${clientLogo(e)}<div class="workText"><div class="workTitle">${workTitle(e)}</div><div class="workMeta">${workMeta(e)}</div></div></div>
-  <div class="workProgress"><div class="small">${e.progress}% concluído</div><div class="progress"><div class="bar" style="width:${e.progress}%"></div></div></div>
-  ${me.role==='admin'?`<div class="listActions"><button class="secondary mini iconBtn archiveEvt" data-id="${e.id}" data-name="${esc(e.name)}" title="Arquivar trabalho" aria-label="Arquivar trabalho">▣</button><button class="danger mini iconBtn delEvt" data-id="${e.id}" data-name="${esc(e.name)}" title="Mover para a lixeira" aria-label="Mover para a lixeira">🗑</button></div>`:''}</div>`).join('')||'<div class="card emptyState">Nenhum trabalho em andamento.</div>'}</div>`;
-  const workSortEl=document.getElementById('workSort');
-  const workSortDirBtn=document.getElementById('workSortDirBtn');
-  const workClientFilterEl=document.getElementById('workClientFilter');
-  workSortEl.value=workSortKey;
-  workClientFilterEl.value=workClientFilter;
-  workSortEl.onchange=()=>{workSortKey=workSortEl.value;sessionStorage.setItem('workSortKey',workSortKey);loadEvents()};
-  workSortDirBtn.onclick=()=>{workSortDir=workSortDir==='asc'?'desc':'asc';sessionStorage.setItem('workSortDir',workSortDir);loadEvents()};
-  workClientFilterEl.onchange=()=>{workClientFilter=workClientFilterEl.value;sessionStorage.setItem('workClientFilter',workClientFilter);loadEvents()};
-  calendarBtn.onclick=openCalendar;
-  myTasksBtn.onclick=openMyTasks;
-  const moreMenuBtn=document.getElementById('moreMenuBtn');
-  const moreMenuDropdown=document.getElementById('moreMenuDropdown');
-  const closeMoreMenu=()=>{moreMenuDropdown.classList.remove('open');moreMenuBtn.setAttribute('aria-expanded','false')};
-  moreMenuBtn.onclick=(ev)=>{ev.stopPropagation();const opening=!moreMenuDropdown.classList.contains('open');closeMoreMenu();if(opening){moreMenuDropdown.classList.add('open');moreMenuBtn.setAttribute('aria-expanded','true');setTimeout(()=>document.addEventListener('click',closeMoreMenu,{once:true}),0)}};
-  document.getElementById('calendarMenuBtn').onclick=()=>{closeMoreMenu();openCalendar()};
-  document.getElementById('myTasksMenuBtn').onclick=()=>{closeMoreMenu();openMyTasks()};
-  moreMenuDropdown.onclick=ev=>ev.stopPropagation();
-  moreMenuDropdown.onkeydown=ev=>{if(ev.key==='Escape'){closeMoreMenu();moreMenuBtn.focus()}};
-  if(me.role==='admin'){
-    usersBtn.onclick=()=>{closeMoreMenu();openUsers()};archivedBtn.onclick=()=>{closeMoreMenu();openArchivedEvents()};trashBtn.onclick=()=>{closeMoreMenu();openTrash()};
-    templateBtn.onclick=()=>{closeMoreMenu();templateSummaries=[];openTemplateEditor()};newEventBtn.onclick=openNewEventModal;
-  }
-  document.querySelectorAll('.event').forEach(x=>x.onclick=()=>openEvent(Number(x.dataset.eventId)));
-  document.querySelectorAll('.archiveEvt').forEach(b=>b.onclick=async e=>{e.stopPropagation();if(confirm(`Arquivar o trabalho "${b.dataset.name}"?\n\nEle sairá da lista de Trabalhos em Andamento e ficará disponível em Arquivados.`)){await api('/api/events/'+b.dataset.id+'/archive',{method:'PATCH'});loadEvents()}});
+  app.innerHTML=`<div class="pageHeader"><div><h1>Trabalhos</h1><div class="pageSubtitle">Acompanhe projetos, tarefas e prazos em um só lugar.</div></div>${me.role==='admin'?'<button class="primary newWorkBtn" id="newEventBtn">＋ Novo trabalho</button>':''}</div>
+  <div class="workFilters">
+    <input id="workSearch" value="${esc(workSearch)}" placeholder="⌕  Buscar cliente ou trabalho…" aria-label="Buscar trabalhos">
+    <select id="workClientFilter" aria-label="Filtrar por cliente"><option value="">Todos os clientes</option>${clients.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')}${hasEmptyClient?'<option value="__EMPTY__">Sem cliente</option>':''}</select>
+    <select id="workTypeFilter" aria-label="Filtrar por tipo"><option value="">Todos os tipos</option>${types.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('')}</select>
+    <div class="sortCluster"><select id="workSort" aria-label="Ordenar trabalhos"><option value="created_at">Mais recentes</option><option value="client">Cliente A–Z</option><option value="type">Tipo</option></select><button class="iconControl" id="workSortDirBtn" title="Inverter ordem" aria-label="Inverter ordem">${workSortDir==='asc'?'↑':'↓'}</button></div>
+  </div>
+  <div class="modernWorkList">${ordered.map(e=>`<article class="modernWorkRow" data-event-id="${e.id}">
+    <div class="workIdentity">${clientLogo(e)}<div class="workText"><div class="workTitle">${workTitle(e)}</div><div class="workMeta">${workMeta(e)}</div></div></div>
+    <div class="workProgress"><span>${e.progress}%</span><div class="progress"><div class="bar" style="width:${Math.max(0,Math.min(100,Number(e.progress)||0))}%"></div></div></div>
+    ${me.role==='admin'?`<details class="rowMenu"><summary title="Opções" aria-label="Opções">⋯</summary><div class="rowMenuPopup"><button class="archiveEvt" data-id="${e.id}" data-name="${esc(e.name)}">▤ Arquivar</button><button class="delEvt dangerText" data-id="${e.id}" data-name="${esc(e.name)}">♲ Lixeira</button></div></details>`:'<span></span>'}
+  </article>`).join('')||'<div class="emptyState modernEmpty">Nenhum trabalho encontrado.</div>'}</div>`;
+
+  const sortEl=document.getElementById('workSort'), clientEl=document.getElementById('workClientFilter'), typeEl=document.getElementById('workTypeFilter'), searchEl=document.getElementById('workSearch');
+  sortEl.value=workSortKey;clientEl.value=workClientFilter;typeEl.value=workTypeFilter;
+  sortEl.onchange=()=>{workSortKey=sortEl.value;sessionStorage.setItem('workSortKey',workSortKey);renderWorkDashboard(events)};
+  document.getElementById('workSortDirBtn').onclick=()=>{workSortDir=workSortDir==='asc'?'desc':'asc';sessionStorage.setItem('workSortDir',workSortDir);renderWorkDashboard(events)};
+  clientEl.onchange=()=>{workClientFilter=clientEl.value;sessionStorage.setItem('workClientFilter',workClientFilter);renderWorkDashboard(events)};
+  typeEl.onchange=()=>{workTypeFilter=typeEl.value;sessionStorage.setItem('workTypeFilter',workTypeFilter);renderWorkDashboard(events)};
+  let searchTimer;searchEl.oninput=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>{workSearch=searchEl.value;sessionStorage.setItem('workSearch',workSearch);renderWorkDashboard(events);const n=document.getElementById('workSearch');n.focus();n.setSelectionRange(n.value.length,n.value.length)},180)};
+  if(me.role==='admin')document.getElementById('newEventBtn').onclick=openNewEventModal;
+  document.querySelectorAll('.modernWorkRow').forEach(x=>x.onclick=e=>{if(e.target.closest('button,summary,details'))return;openEvent(Number(x.dataset.eventId))});
+  document.querySelectorAll('.archiveEvt').forEach(b=>b.onclick=async e=>{e.stopPropagation();if(confirm(`Arquivar o trabalho "${b.dataset.name}"?\n\nEle sairá da lista de Trabalhos e ficará disponível em Arquivados.`)){await api('/api/events/'+b.dataset.id+'/archive',{method:'PATCH'});loadEvents()}});
   document.querySelectorAll('.delEvt').forEach(b=>b.onclick=async e=>{e.stopPropagation();if(confirm(`Mover o trabalho "${b.dataset.name}" para a Lixeira?\n\nEle poderá ser restaurado depois.`)){await api('/api/events/'+b.dataset.id,{method:'DELETE'});loadEvents()}});
 }
 let calendarMonthCursor=null,calendarTaskCache=[];
@@ -1101,12 +1142,12 @@ async function openEvent(id,loaded=null){
   }
   const phases=[...new Set(currentEvent.tasks.map(t=>t.phase_name))];
 
-  app.innerHTML=`<div class="toolbar">
-    <div><button class="secondary" id="backBtn">← Voltar para lista</button><h1>${clientLogo(currentEvent)}${esc(currentEvent.name)}</h1></div>
-    <div class="actions">
+  app.innerHTML=`<div class="workPageHeader">
+    <button class="backLink" id="backBtn">← Trabalhos</button>
+    <div class="workPageTitleRow"><div class="workPageIdentity">${clientLogo(currentEvent)}<div><div class="workClientLabel">${esc(currentEvent.client||'')}</div><h1>${esc(currentEvent.name)}</h1></div></div><div class="actions workPageActions">
       <button class="secondary" id="exportCsvBtn">Exportar CSV</button>
       ${me.role==='admin'?'<button class="secondary" id="eventDetailsBtn">Mais detalhes</button><button class="secondary" id="membersBtn">Colaboradores</button>':''}
-    </div>
+    </div></div>
   </div>
 
   <div class="eventSummary">
@@ -1206,7 +1247,7 @@ async function openEvent(id,loaded=null){
   if(['admin','collaborator'].includes(me.role)){
     document.querySelectorAll('.deleteTask').forEach(b=>b.onclick=async e=>{
       e.stopPropagation();
-      if(confirm('Excluir tarefa deste evento?')){
+      if(confirm('Excluir tarefa deste trabalho?')){
         await api('/api/tasks/'+b.dataset.id,{method:'DELETE'});
         await openEvent(currentEvent.id);
       }
