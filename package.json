@@ -1,6 +1,6 @@
 {
-  "name": "antonicelli-gerenciamento-projetos-v5.0-render",
-  "version": "2.0.0",
+  "name": "antonicelli-gerenciamento-projetos-v5.0.1-render",
+  "version": "1.0.5-1",
   "private": true,
   "scripts": {
     "start": "node --env-file-if-exists=.env server.js",
