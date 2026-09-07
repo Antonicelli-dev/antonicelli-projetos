@@ -123,3 +123,18 @@ body{font-family:"Inter",ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe U
   .taskFilters input{grid-column:1}
   .modalbox h2{font-size:18px}
 }
+
+
+/* V5.0.5 — CORRE branding + Antonicelli signature */
+.sidebarAgencyBrand{margin-top:auto;display:flex;justify-content:center;align-items:center;padding:16px 8px 12px;border-top:1px solid #42464d}
+.sidebarAgencyBrand img{width:58px;height:58px;object-fit:contain;display:block}
+.sidebarUser{margin-top:0}
+.appBrandFooter{margin-top:34px;padding:20px 0 4px;border-top:1px solid var(--v5-border);display:flex;justify-content:center;align-items:center;min-height:52px}
+.appBrandFooter img{height:26px;width:auto;max-width:min(240px,70vw);object-fit:contain;opacity:.72}
+@media(max-width:760px){
+  .mobileTopbar img{height:26px!important;width:auto!important;max-width:calc(100% - 58px)!important;object-fit:contain}
+  .sidebarAgencyBrand{padding:14px 8px 10px}
+  .sidebarAgencyBrand img{width:52px;height:52px}
+  .appBrandFooter{margin-top:26px;padding-top:16px}
+  .appBrandFooter img{height:24px}
+}

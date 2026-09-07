@@ -1,12 +1,12 @@
 {
-  "name": "Antonicelli - Gerenciamento de Projetos",
-  "short_name": "Antonicelli",
-  "description": "Plataforma de gerenciamento de projetos da Antonicelli Comunicação e Eventos",
+  "name": "CORRE - Central de organização de rotinas, responsáveis e eventos",
+  "short_name": "CORRE",
+  "description": "Central de organização de rotinas, responsáveis e eventos da Antonicelli Comunicação e Eventos",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "theme_color": "#30343a",
   "icons": [
     {
       "src": "/icons/icon-192.png",

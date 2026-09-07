@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Antonicelli — Gerenciamento de Projetos</title>
+<title>CORRE — Central de organização de rotinas, responsáveis e eventos</title>
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f5f6f8;color:#20242b}
 header{height:64px;background:#17191d;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 24px}
@@ -114,19 +114,20 @@ label{display:block;font-size:12px;font-weight:bold;margin:10px 0 5px}.small{fon
   <meta name="theme-color" content="#ffffff">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Antonicelli">
+  <meta name="apple-mobile-web-app-title" content="CORRE">
 <link rel="stylesheet" href="/v43.css">
 <link rel="stylesheet" href="/v50.css">
 </head>
 <body>
 <div class="mobileTopbar" id="mobileTopbar">
   <button class="mobileMenuButton" id="mobileMenuButton" type="button" aria-label="Abrir menu">☰</button>
-  <img src="/assets/logo-antonicelli.png" alt="Antonicelli Comunicação e Eventos">
+  <img src="/assets/logo-corre-horizontal.svg" alt="CORRE">
 </div>
 <div class="appShell">
   <aside class="appSidebar" id="appSidebar">
-    <div class="sidebarBrand"><img src="/assets/logo-antonicelli-quadrado.svg" alt="Antonicelli Comunicação e Eventos"></div>
+    <div class="sidebarBrand"><img src="/assets/logo-corre.svg" alt="CORRE"></div>
     <nav class="sidebarNav" id="sidebarNav" aria-label="Navegação principal"></nav>
+    <div class="sidebarAgencyBrand" aria-label="Antonicelli Comunicação e Eventos"><img src="/assets/logo-antonicelli-quadrado.svg" alt="Antonicelli Comunicação e Eventos"></div>
     <div class="sidebarUser" id="userbar"></div>
   </aside>
   <div class="sidebarBackdrop" id="sidebarBackdrop"></div>
@@ -433,6 +434,7 @@ function workTitle(e){
   const client=String(e.client||'').trim(),name=String(e.name||'').trim();
   return client?`<b>${esc(client)}</b><span class="workTitleSep"> | </span><b class="workName">${esc(name)}</b>`:`<b class="workName">${esc(name)}</b>`;
 }
+function antBrandFooter(){return `<footer class="appBrandFooter"><img src="/assets/logo-antonicelli.png" alt="Antonicelli Comunicação e Eventos"></footer>`}
 async function loadEvents(){
   const view=beginView('/trabalhos');userbar();
   const events=await api('/api/events');if(view!==viewRevision)return;
@@ -456,7 +458,7 @@ function renderWorkDashboard(events){
     <div class="workIdentity">${clientLogo(e)}<div class="workText"><div class="workTitle">${workTitle(e)}</div><div class="workMeta">${workMeta(e)}</div></div></div>
     <div class="workProgress"><span>${e.progress}%</span><div class="progress"><div class="bar" style="width:${Math.max(0,Math.min(100,Number(e.progress)||0))}%"></div></div></div>
     ${me.role==='admin'?`<details class="rowMenu"><summary title="Opções" aria-label="Opções">⋯</summary><div class="rowMenuPopup"><button class="archiveEvt" data-id="${e.id}" data-name="${esc(e.name)}">▤ Arquivar</button><button class="delEvt dangerText" data-id="${e.id}" data-name="${esc(e.name)}">♲ Lixeira</button></div></details>`:'<span></span>'}
-  </article>`).join('')||'<div class="emptyState modernEmpty">Nenhum trabalho encontrado.</div>'}</div>`;
+  </article>`).join('')||'<div class="emptyState modernEmpty">Nenhum trabalho encontrado.</div>'}</div>${antBrandFooter()}`;
 
   const sortEl=document.getElementById('workSort'), clientEl=document.getElementById('workClientFilter'), typeEl=document.getElementById('workTypeFilter'), searchEl=document.getElementById('workSearch');
   sortEl.value=workSortKey;clientEl.value=workClientFilter;typeEl.value=workTypeFilter;
@@ -710,7 +712,7 @@ async function openMyTasks(){
   const tasks=await api('/api/my-tasks');if(view!==viewRevision)return;
   app.innerHTML=`<div class="toolbar"><div><button class="secondary" id="backHome">← Trabalhos</button><h1>Minhas tarefas</h1></div></div>
   ${tasks.map(t=>`<div class="card"><b>${esc(t.name)}</b><div class="small">${esc(t.event_name)} · ${esc(t.phase_name)} / ${esc(t.category_name)} · ${esc(t.status)}</div>
-  <div style="margin-top:10px"><button class="secondary openTaskEvent" data-id="${t.event_id}">Abrir evento</button></div></div>`).join('')||'<div class="card small">Nenhuma tarefa atribuída a você.</div>'}`;
+  <div style="margin-top:10px"><button class="secondary openTaskEvent" data-id="${t.event_id}">Abrir evento</button></div></div>`).join('')||'<div class="card small">Nenhuma tarefa atribuída a você.</div>'}${antBrandFooter()}`;
   backHome.onclick=loadEvents;document.querySelectorAll('.openTaskEvent').forEach(b=>b.onclick=()=>openEvent(Number(b.dataset.id)));
 }
 
@@ -1203,7 +1205,7 @@ async function openEvent(id,loaded=null){
         </div>`).join('')}
       </div>
     </div>`).join('')}
-  </section>`).join('')}`;
+  </section>`).join('')}${antBrandFooter()}`;
 
   document.getElementById('exportCsvBtn').onclick=()=>downloadWorkCsv(currentEvent.id);
   document.getElementById('backBtn').onclick=loadEvents;
