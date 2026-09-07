@@ -434,7 +434,7 @@ function workTitle(e){
   const client=String(e.client||'').trim(),name=String(e.name||'').trim();
   return client?`<b>${esc(client)}</b><span class="workTitleSep"> | </span><b class="workName">${esc(name)}</b>`:`<b class="workName">${esc(name)}</b>`;
 }
-function antBrandFooter(){return `<footer class="appBrandFooter"><img src="/assets/logo-antonicelli.png" alt="Antonicelli Comunicação e Eventos"></footer>`}
+function antBrandFooter(){return `<footer class="appBrandFooter"><img src="/assets/logo-antonicelli-horizontal-preto.svg" alt="Antonicelli Comunicação e Eventos"></footer>`}
 async function loadEvents(){
   const view=beginView('/trabalhos');userbar();
   const events=await api('/api/events');if(view!==viewRevision)return;

@@ -138,3 +138,19 @@ body{font-family:"Inter",ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe U
   .appBrandFooter{margin-top:26px;padding-top:16px}
   .appBrandFooter img{height:24px}
 }
+
+/* V5.0.6 — final brand positioning refinements */
+/* Lift CORRE brand slightly so its visual center aligns better with page titles. */
+.sidebarBrand{transform:translateY(-10px);margin-bottom:-10px}
+
+/* Larger Antonicelli signature above the user profile. */
+.sidebarAgencyBrand{padding:18px 8px 14px}
+.sidebarAgencyBrand img{width:78px;height:78px;object-fit:contain}
+
+/* Page footer uses the black horizontal Antonicelli logo on light backgrounds. */
+.appBrandFooter img{height:26px;width:auto;max-width:min(230px,70vw);object-fit:contain;display:block}
+
+@media(max-width:760px){
+  .sidebarBrand{transform:translateY(-8px);margin-bottom:-8px}
+  .sidebarAgencyBrand img{width:70px;height:70px}
+}
