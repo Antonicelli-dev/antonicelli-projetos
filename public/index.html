@@ -1194,7 +1194,7 @@ async function openEvent(id,loaded=null){
                     <option value="">Responsável</option>
                     ${currentEvent.members.filter(m=>m.role!=='guest').map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('')}
                   </select>`)}
-          ${['admin','collaborator'].includes(me.role)?`<div class="actions"><button class="danger mini deleteTask iconDeleteTask" data-id="${t.id}" aria-label="Excluir tarefa" title="Excluir tarefa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-2 6h10l-.7 11H7.7L7 9Zm3 2v7h2v-7h-2Zm4 0v7h2v-7h-2Z"/></svg></button></div>`:''}
+          ${['admin','collaborator'].includes(me.role)?`<div class="actions desktopTaskActions"><button class="danger mini deleteTask iconDeleteTask" data-id="${t.id}" aria-label="Excluir tarefa" title="Excluir tarefa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-2 6h10l-.7 11H7.7L7 9Zm3 2v7h2v-7h-2Zm4 0v7h2v-7h-2Z"/></svg></button></div><details class="taskMobileMenu"><summary aria-label="Opções da tarefa" title="Opções">⋯</summary><div class="taskMobileMenuPopup"><button class="deleteTask" data-id="${t.id}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-2 6h10l-.7 11H7.7L7 9Zm3 2v7h2v-7h-2Zm4 0v7h2v-7h-2Z"/></svg>Excluir tarefa</button></div></details>`:''}
         </div>`).join('')}
       </div>
     </div>`).join('')}
@@ -1223,7 +1223,7 @@ async function openEvent(id,loaded=null){
 
   document.querySelectorAll('.task').forEach(row=>{
     row.addEventListener('click',e=>{
-      if(e.target.closest('select,button,.dragHandle'))return;
+      if(e.target.closest('select,button,.dragHandle,details,summary'))return;
       const t=currentEvent.tasks.find(x=>String(x.id)===String(row.dataset.taskId));
       if(t)openTaskDetails(t);
     });

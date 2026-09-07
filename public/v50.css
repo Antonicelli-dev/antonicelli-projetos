@@ -53,3 +53,40 @@ body{font-family:"Inter",ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe U
 
 @media(max-width:980px){.sidebarBrand{height:146px}.sidebarBrand img{width:min(136px,100%);max-width:136px;max-height:136px}}
 @media(max-width:760px){.sidebarBrand{height:158px}.sidebarBrand img{width:min(150px,100%);max-width:150px;max-height:150px}.task{column-gap:8px}.task>.avatarStack,.task>.responsiblePicker{margin-left:0}}
+
+
+/* V5.0.3 — typography parity + compact mobile task rows */
+/* Keep task-page typography on the same visual scale as the Works screen. */
+.taskName{font-size:13px;line-height:1.35;font-weight:650}
+.task .small{font-size:11px;line-height:1.35}
+.task select{font-size:12px}
+.task .statusSelect{font-size:11px}
+.catTitle{font-size:13px}
+.cathead .mini{font-size:11px}
+.filters.card select{font-size:12px}
+.summaryValue{font-size:12px}
+.workClientLabel{font-size:11px}
+
+.taskMobileMenu{display:none;position:relative}
+.taskMobileMenu summary{list-style:none;width:32px;height:32px;display:grid;place-items:center;border-radius:7px;color:var(--v5-muted);font-size:20px;line-height:1;cursor:pointer;user-select:none}
+.taskMobileMenu summary::-webkit-details-marker{display:none}
+.taskMobileMenu summary:hover{background:var(--v5-hover);color:var(--v5-text)}
+.taskMobileMenuPopup{position:absolute;right:0;top:35px;z-index:20;min-width:145px;padding:5px;background:#fff;border:1px solid var(--v5-border);border-radius:9px;box-shadow:0 10px 30px #1112}
+.taskMobileMenuPopup button{width:100%;display:flex;align-items:center;gap:8px;text-align:left;background:transparent;border:0;padding:8px 9px;border-radius:6px;font-size:12px;color:#a52a2a}
+.taskMobileMenuPopup button:hover{background:var(--v5-hover)}
+.taskMobileMenuPopup svg{width:14px;height:14px;fill:currentColor;flex:none}
+.desktopTaskActions{display:flex}
+
+@media(max-width:760px){
+  /* Mobile task rows prioritize name + status. Responsible controls move out of the row. */
+  .task{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;grid-template-areas:"name menu" "status status";column-gap:8px!important;row-gap:6px!important;padding:9px 4px!important;min-width:0}
+  .task>div:first-child{grid-area:name;min-width:0}
+  .task>.statusSelect{grid-area:status;width:100%;min-width:0;height:34px}
+  .task>.avatarStack,.task>.responsiblePicker,.task>span.small{display:none!important}
+  .desktopTaskActions{display:none!important}
+  .taskMobileMenu{display:block;grid-area:menu;align-self:start;justify-self:end}
+  .taskName{font-size:13px;line-height:1.35;white-space:normal;overflow-wrap:anywhere}
+  .task .small{font-size:11px}
+  .taskrow{padding-left:7px;padding-right:7px;overflow:visible}
+  .cat{overflow:visible}
+}
