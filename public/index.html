@@ -953,15 +953,19 @@ function responsibleAvatars(task){
   </div>`;
 }
 function filterTasks(){
+  const query=(document.getElementById('filterTaskSearch')?.value||'').trim().toLocaleLowerCase('pt-BR');
   const status=document.getElementById('filterStatus')?.value||'';
   const resp=document.getElementById('filterResp')?.value||'';
   const phase=document.getElementById('filterPhase')?.value||'';
 
   document.querySelectorAll('.task').forEach(task=>{
+    const source=currentEvent?.tasks?.find(t=>String(t.id)===String(task.dataset.taskId));
+    const haystack=source?[source.name,source.notes,source.category_name,source.phase_name].filter(Boolean).join(' ').toLocaleLowerCase('pt-BR'):'';
+    const matchesQuery=!query||haystack.includes(query);
     const matchesStatus=!status||task.dataset.status===status;
     const matchesResp=!resp||(task.dataset.resp||'').split(',').includes(resp);
     const matchesPhase=!phase||task.dataset.phase===phase;
-    task.classList.toggle('hidden',!(matchesStatus&&matchesResp&&matchesPhase));
+    task.classList.toggle('hidden',!(matchesQuery&&matchesStatus&&matchesResp&&matchesPhase));
   });
 
   document.querySelectorAll('.cat').forEach(cat=>{
@@ -1163,7 +1167,8 @@ async function openEvent(id,loaded=null){
 
   
 
-  <div class="filters card">
+  <div class="filters card taskFilters">
+    <input id="filterTaskSearch" type="search" placeholder="Buscar tarefas..." autocomplete="off" aria-label="Buscar tarefas">
     <select id="filterStatus"><option value="">Todos os status</option>${['Não Iniciada','Em Andamento','Concluída','Atrasada'].map(x=>`<option>${x}</option>`).join('')}</select>
     <select id="filterResp"><option value="">Todos os responsáveis</option><option value="none">Sem responsável</option>${currentEvent.members.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('')}</select>
     <select id="filterPhase"><option value="">Todas as fases</option>${phases.map(p=>`<option>${esc(p)}</option>`).join('')}</select>
@@ -1202,6 +1207,7 @@ async function openEvent(id,loaded=null){
 
   document.getElementById('exportCsvBtn').onclick=()=>downloadWorkCsv(currentEvent.id);
   document.getElementById('backBtn').onclick=loadEvents;
+  document.getElementById('filterTaskSearch').oninput=filterTasks;
   document.getElementById('filterStatus').onchange=filterTasks;
   document.getElementById('filterResp').onchange=filterTasks;
   document.getElementById('filterPhase').onchange=filterTasks;

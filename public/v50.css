@@ -90,3 +90,36 @@ body{font-family:"Inter",ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe U
   .taskrow{padding-left:7px;padding-right:7px;overflow:visible}
   .cat{overflow:visible}
 }
+
+/* V5.0.4 — typography consistency + task search */
+/* Keep secondary pages and floating dialogs on the same Inter scale used by Works/Tasks. */
+#app,.modalbox,.modalbox input,.modalbox select,.modalbox textarea,.modalbox button{font-family:"Inter",ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+.toolbar h1{font-size:27px;line-height:1.2;letter-spacing:-.02em;margin-top:0;font-weight:700}
+.toolbar .small,.archiveMeta,.modelTab .small,.modelHeader .small{font-size:11px;line-height:1.4;color:var(--v5-muted)}
+.toolbar button,.listActions button,.modelHeader button,.modelTabs button,.templateCategory button,.tplTask button{font-size:12px}
+.modelHeader h2,.phaseHead h2{font-size:18px;line-height:1.25;letter-spacing:-.01em}
+.modelTab{font-size:13px}.templateCategory,.tplTask{font-size:13px}
+.modalbox{font-size:13px;color:var(--v5-text)}
+.modalbox h2{font-size:19px;line-height:1.25;letter-spacing:-.015em;font-weight:700}
+.modalbox h3{font-size:15px;line-height:1.3}
+.modalbox .small{font-size:11px;line-height:1.4;color:var(--v5-muted)}
+.modalbox label{font-size:12px;font-weight:650}
+.modalbox input,.modalbox select,.modalbox textarea{font-size:13px;line-height:1.4}
+.modalbox button{font-size:12px}
+.modalbox .responsibleChecks label{font-size:13px;font-weight:400}
+
+/* Search + three filters, aligned with the Works-screen control language. */
+.filters.card.taskFilters{grid-template-columns:minmax(210px,1.35fr) repeat(3,minmax(130px,1fr))}
+.taskFilters input,.taskFilters select{height:36px;background:#fff;border:1px solid var(--v5-border);border-radius:7px;padding:6px 9px;font-size:12px}
+.taskFilters input::placeholder{color:#9299a3}
+
+@media(max-width:980px){
+  .filters.card.taskFilters{grid-template-columns:1fr 1fr}
+  .taskFilters input{grid-column:1/-1}
+}
+@media(max-width:760px){
+  .toolbar h1{font-size:22px}
+  .filters.card.taskFilters{grid-template-columns:1fr}
+  .taskFilters input{grid-column:1}
+  .modalbox h2{font-size:18px}
+}
