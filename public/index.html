@@ -105,6 +105,9 @@ label{display:block;font-size:12px;font-weight:bold;margin:10px 0 5px}.small{fon
 
 @media(max-width:900px){.event,.task,.filters,.detailGrid,.detailMeta{grid-template-columns:1fr}.toolbar,.phaseHead{align-items:flex-start;flex-direction:column}}
 </style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
@@ -118,7 +121,7 @@ label{display:block;font-size:12px;font-weight:bold;margin:10px 0 5px}.small{fon
 <body>
 <div class="mobileTopbar" id="mobileTopbar">
   <button class="mobileMenuButton" id="mobileMenuButton" type="button" aria-label="Abrir menu">☰</button>
-  <img src="/assets/logo-antonicelli-quadrado.svg" alt="Antonicelli Comunicação e Eventos">
+  <img src="/assets/logo-antonicelli.png" alt="Antonicelli Comunicação e Eventos">
 </div>
 <div class="appShell">
   <aside class="appSidebar" id="appSidebar">
@@ -1188,10 +1191,10 @@ async function openEvent(id,loaded=null){
             : (me.role==='guest'
                 ? '<span class="small">Sem responsável</span>'
                 : `<select class="taskRespQuick responsiblePicker" data-id="${t.id}">
-                    <option value="">Selecionar responsável...</option>
+                    <option value="">Responsável</option>
                     ${currentEvent.members.filter(m=>m.role!=='guest').map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('')}
                   </select>`)}
-          ${['admin','collaborator'].includes(me.role)?`<div class="actions"><button class="danger mini deleteTask" data-id="${t.id}">Excluir</button></div>`:''}
+          ${['admin','collaborator'].includes(me.role)?`<div class="actions"><button class="danger mini deleteTask iconDeleteTask" data-id="${t.id}" aria-label="Excluir tarefa" title="Excluir tarefa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-2 6h10l-.7 11H7.7L7 9Zm3 2v7h2v-7h-2Zm4 0v7h2v-7h-2Z"/></svg></button></div>`:''}
         </div>`).join('')}
       </div>
     </div>`).join('')}

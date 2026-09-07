@@ -31,3 +31,25 @@ body.authMode .appSidebar,body.authMode .mobileTopbar{display:none}body.authMode
 
 @media(max-width:900px){.eventSummary{display:flex}.task{grid-template-columns:minmax(190px,1fr) 130px 135px auto}}
 @media(max-width:760px){.sidebarBrand img{height:44px;width:44px}.eventSummary{gap:5px}.summaryItem{padding:5px 7px}.workPageActions{width:auto;max-width:100%;flex-wrap:wrap}.task{grid-template-columns:1fr!important;padding:8px 4px;gap:6px}.task select{width:100%;height:34px}.task .actions{justify-content:flex-start}.phaseSection>h2{font-size:13px}.cathead{align-items:center;flex-direction:row;flex-wrap:wrap}.cathead .actions{width:auto}.filters.card{grid-template-columns:1fr}.filters.card select{height:36px}}
+
+
+/* V5.0.2 — typography and task-row polish */
+body{font-family:"Inter",ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+
+/* Larger square brand in the dark desktop sidebar */
+.sidebarBrand{height:158px;padding:8px 8px 14px;justify-content:center;align-items:center}
+.sidebarBrand img{width:min(150px,100%);height:auto;max-width:150px;max-height:150px;object-fit:contain}
+
+/* When the compact top header is visible, use the original horizontal 26px logo */
+.mobileTopbar img{height:26px!important;width:auto!important;max-width:calc(100% - 58px)!important;object-fit:contain}
+
+/* Slightly more breathing room between status and responsible controls */
+.task{column-gap:14px}
+.task>.avatarStack,.task>.responsiblePicker{margin-left:3px}
+
+/* Compact icon-only destructive action */
+.iconDeleteTask{width:30px;height:30px;padding:0!important;display:inline-grid;place-items:center;border-radius:6px!important}
+.iconDeleteTask svg{width:14px;height:14px;display:block;fill:currentColor}
+
+@media(max-width:980px){.sidebarBrand{height:146px}.sidebarBrand img{width:min(136px,100%);max-width:136px;max-height:136px}}
+@media(max-width:760px){.sidebarBrand{height:158px}.sidebarBrand img{width:min(150px,100%);max-width:150px;max-height:150px}.task{column-gap:8px}.task>.avatarStack,.task>.responsiblePicker{margin-left:0}}
