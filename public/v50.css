@@ -130,7 +130,7 @@ body{font-family:"Inter",ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe U
 .sidebarAgencyBrand img{width:58px;height:58px;object-fit:contain;display:block}
 .sidebarUser{margin-top:0}
 .appBrandFooter{margin-top:34px;padding:20px 0 4px;border-top:1px solid var(--v5-border);display:flex;justify-content:center;align-items:center;min-height:52px}
-.appBrandFooter img{height:26px;width:auto;max-width:min(240px,70vw);object-fit:contain;opacity:.72}
+.appBrandFooter img{height:36px;width:auto;max-width:min(350px,70vw);object-fit:contain;opacity:.72}
 @media(max-width:760px){
   .mobileTopbar img{height:26px!important;width:auto!important;max-width:calc(100% - 58px)!important;object-fit:contain}
   .sidebarAgencyBrand{padding:14px 8px 10px}
