@@ -145,7 +145,7 @@ body{font-family:"Inter",ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe U
 
 /* Larger Antonicelli signature above the user profile. */
 .sidebarAgencyBrand{padding:18px 8px 14px}
-.sidebarAgencyBrand img{width:78px;height:78px;object-fit:contain}
+.sidebarAgencyBrand img{width:150px;height:150px;object-fit:contain}
 
 /* Page footer uses the black horizontal Antonicelli logo on light backgrounds. */
 .appBrandFooter img{height:26px;width:auto;max-width:min(230px,70vw);object-fit:contain;display:block}
