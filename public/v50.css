@@ -135,7 +135,7 @@ body{font-family:"Inter",ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe U
   .mobileTopbar img{height:26px!important;width:auto!important;max-width:calc(100% - 58px)!important;object-fit:contain}
   .sidebarAgencyBrand{padding:14px 8px 10px}
   .sidebarAgencyBrand img{width:52px;height:52px}
-  .appBrandFooter{margin-top:26px;padding-top:16px}
+  .appBrandFooter{margin-top:36px;padding-top:16px}
   .appBrandFooter img{height:24px}
 }
 
@@ -148,7 +148,7 @@ body{font-family:"Inter",ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe U
 .sidebarAgencyBrand img{width:150px;height:150px;object-fit:contain}
 
 /* Page footer uses the black horizontal Antonicelli logo on light backgrounds. */
-.appBrandFooter img{height:26px;width:auto;max-width:min(230px,70vw);object-fit:contain;display:block}
+.appBrandFooter img{height:36px;width:auto;max-width:min(350px,70vw);object-fit:contain;display:block}
 
 @media(max-width:760px){
   .sidebarBrand{transform:translateY(-8px);margin-bottom:-8px}
