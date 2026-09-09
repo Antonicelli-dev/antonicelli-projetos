@@ -447,7 +447,7 @@ function renderWorkDashboard(events){
   if(workTypeFilter && !types.includes(workTypeFilter))workTypeFilter='';
   const ordered=sortedWorks(filteredWorks(events));
   const hasEmptyClient=events.some(e=>!String(e.client||'').trim());
-  app.innerHTML=`<div class="pageHeader"><div><h1>Trabalhos</h1><div class="pageSubtitle">Acompanhe projetos, tarefas e prazos em um só lugar.</div></div>${me.role==='admin'?'<button class="primary newWorkBtn" id="newEventBtn">＋ Novo trabalho</button>':''}</div>
+  app.innerHTML=`<div class="pageHeader"><div><h1>Trabalhossss</h1><div class="pageSubtitle">Acompanhe projetos, tarefas e prazos em um só lugar.</div></div>${me.role==='admin'?'<button class="primary newWorkBtn" id="newEventBtn">＋ Novo trabalho</button>':''}</div>
   <div class="workFilters">
     <input id="workSearch" value="${esc(workSearch)}" placeholder="⌕  Buscar cliente ou trabalho…" aria-label="Buscar trabalhos">
     <select id="workClientFilter" aria-label="Filtrar por cliente"><option value="">Todos os clientes</option>${clients.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')}${hasEmptyClient?'<option value="__EMPTY__">Sem cliente</option>':''}</select>
